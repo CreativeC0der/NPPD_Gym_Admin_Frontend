@@ -1,0 +1,115 @@
+[
+    {
+        "location": {
+            "type": "Point"
+        },
+        "amenities": [],
+        "_id": "68fcf4bcfa2942b5b4068a87",
+        "name": "FitLife Gym Center",
+        "address": "123 Main Street, New York, NY 10001",
+        "phone": "+1 (555) 123-4567",
+        "email": "contact@fitlife.com",
+        "subscriptionPlan": "premium",
+        "admin": {
+            "_id": "68fb8ef5b1a36f9593c74325",
+            "name": "admin",
+            "email": "admin@gmail.com"
+        },
+        "gymId": "GYM-75cf754f-06d7-479e-8e94-3b7ee090fa00",
+        "createdAt": "2025-10-25T16:03:08.047Z",
+        "updatedAt": "2025-10-25T16:03:08.047Z",
+        "__v": 0
+    },
+    {
+        "location": {
+            "type": "Point",
+            "coordinates": [
+                72.8777,
+                19.076
+            ]
+        },
+        "_id": "69005af5db9bd4291dea1253",
+        "name": "FitZone Gym & Fitness",
+        "address": "123 Main Street, Downtown, Mumbai, Maharashtra 400001",
+        "phone": "+91-9876543210",
+        "email": "contact@fitzone.com",
+        "admin": {
+            "_id": "68fb8ef5b1a36f9593c74325",
+            "name": "admin",
+            "email": "admin@gmail.com"
+        },
+        "amenities": [
+            "Swimming Pool",
+            "Sauna",
+            "Personal Training",
+            "Group Classes",
+            "Cardio Equipment"
+        ],
+        "price": 2999,
+        "rating": 4.5,
+        "gymId": "GYM-b2569018-236b-4656-b2d7-851d0f0de763",
+        "createdAt": "2025-10-28T05:56:05.140Z",
+        "updatedAt": "2025-10-28T05:56:05.140Z",
+        "__v": 0
+    },
+    {
+        "location": {
+            "type": "Point",
+            "coordinates": [
+                72.8777,
+                19.076
+            ]
+        },
+        "_id": "6906f1c1181ee2eedecde7eb",
+        "name": "FitZone Gym & Fitness",
+        "address": "123 Main Street, Downtown, Mumbai, Maharashtra 400001",
+        "phone": "+91-9876543210",
+        "email": "contact@fitzone.com",
+        "admin": {
+            "_id": "68fb8ef5b1a36f9593c74325",
+            "name": "admin",
+            "email": "admin@gmail.com"
+        },
+        "amenities": [
+            "Swimming Pool",
+            "Sauna",
+            "Personal Training",
+            "Group Classes",
+            "Cardio Equipment"
+        ],
+        "price": 2999,
+        "rating": 4.5,
+        "gymId": "GYM-7dd1be12-37d7-4434-9cca-657622181faa",
+        "createdAt": "2025-11-02T05:53:05.053Z",
+        "updatedAt": "2025-11-02T05:53:05.053Z",
+        "__v": 0
+    },
+    {
+        "location": {
+            "type": "Point",
+            "coordinates": [
+                44,
+                42
+            ]
+        },
+        "_id": "690702c9181ee2eedecde816",
+        "name": "Trim n tone",
+        "address": "1234, xxxxxxx",
+        "phone": "1234567890",
+        "email": "skbiswas.cse.pg@jadavpuruniversity.in",
+        "admin": {
+            "_id": "68fb8ef5b1a36f9593c74325",
+            "name": "admin",
+            "email": "admin@gmail.com"
+        },
+        "amenities": [
+            "xxx"
+        ],
+        "price": 8,
+        "rating": 1.8,
+        "gymId": "GYM-bd7401b1-5755-4e2a-8076-464db7c1f00f",
+        "createdAt": "2025-11-02T07:05:45.134Z",
+        "updatedAt": "2025-11-02T07:05:45.134Z",
+        "__v": 0
+    }
+]

@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+form-demo.tsx
+request-demo.tsx
+response-demo.tsx
+
+.env
