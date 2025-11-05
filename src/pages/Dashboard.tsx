@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppSelector, useAppDispatch } from '../hooks/hooks';
 import { clearUser } from '../store/slices/UserSlice';
 import { useNavigate } from 'react-router-dom';
-import { showConfirmDialog, showSuccessToast, showInfoToast } from '../utils/toast';
+import { showConfirmDialog, showSuccessToast, showErrorToast } from '../utils/toast';
 import {
     Dialog,
     DialogContent,
@@ -12,12 +12,45 @@ import {
     DialogTrigger
 } from '../components/ui/dialog';
 import CreateAdminForm from '../components/CreateAdminForm';
+import DashboardMetrics, { type DashboardMetricsData } from '../components/DashboardMetrics';
+import { UserRevenueChart } from '../components/UserRevenueChart';
+import { TopPerformingGyms } from '../components/TopPerformingGyms';
+import api from '../axios/axios-config';
+import { RefreshCw } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
     const { user } = useAppSelector((state) => state.user);
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [metrics, setMetrics] = useState<DashboardMetricsData | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+
+    const fetchDashboardMetrics = async () => {
+        try {
+            setLoading(true);
+            const response = await api.get('/metrics/kpi');
+            console.log((response.data));
+
+            setMetrics(response.data);
+            setLastUpdated(new Date());
+        } catch (error: any) {
+            console.error('Error fetching dashboard metrics:', error);
+            showErrorToast(error.response?.data?.message || 'Failed to load dashboard metrics');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchDashboardMetrics();
+    }, []);
+
+    const handleRefresh = () => {
+        fetchDashboardMetrics();
+        showSuccessToast('Dashboard refreshed');
+    };
 
     const handleLogout = async () => {
         const confirmed = await showConfirmDialog(
@@ -39,64 +72,15 @@ const Dashboard: React.FC = () => {
         }
     };
 
-    const getRoleIcon = (role: string) => {
-        switch (role) {
-            case 'admin':
-                return '👑';
-            case 'superadmin':
-                return '⚡';
-            case 'consultant':
-                return '🩺';
-            case 'user':
-                return '👤';
-            default:
-                return '👤';
-        }
-    };
-
-    const getRoleDisplayName = (role: string) => {
-        switch (role) {
-            case 'admin':
-                return 'Executive Admin';
-            case 'superadmin':
-                return 'Super Admin';
-            case 'consultant':
-                return 'Consultant';
-            case 'user':
-                return 'User';
-            default:
-                return 'User';
-        }
-    };
-
-    const getRoleColor = (role: string) => {
-        switch (role) {
-            case 'admin':
-                return 'bg-blue-900 text-blue-300 border border-blue-700';
-            case 'superadmin':
-                return 'bg-purple-900 text-purple-300 border border-purple-700';
-            case 'consultant':
-                return 'bg-green-900 text-green-300 border border-green-700';
-            case 'user':
-                return 'bg-slate-700 text-slate-300 border border-slate-600';
-            default:
-                return 'bg-slate-700 text-slate-300 border border-slate-600';
-        }
-    };
-
-    const handleQuickAction = (actionName: string) => {
-        showInfoToast(`${actionName} feature coming soon!`);
-    };
-
     // Protected component ensures user exists, but add safety check for TypeScript
     if (!user) {
         return null;
     }
 
     return (
-        <div className="min-h-screen bg-slate-950">
+        <div className="min-h-screen bg-[#1a1f2e]">
             {/* Header */}
-            <div className="bg-slate-900 shadow-sm border-b border-slate-700">
+            <div className="bg-[#1f2937] shadow-lg border-b border-slate-700">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center py-4">
                         <div className="flex items-center space-x-4">
@@ -109,7 +93,10 @@ const Dashboard: React.FC = () => {
                         </div>
                         <button
                             onClick={handleLogout}
-                            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+                            className="text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium"
+                            style={{ backgroundColor: 'var(--accent-blue)' }}
+                            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.85'}
+                            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                         >
                             Logout
                         </button>
@@ -119,129 +106,75 @@ const Dashboard: React.FC = () => {
 
             {/* Main Content */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Welcome Section */}
-                <div className="bg-slate-800 rounded-lg shadow-sm border border-slate-700 p-6 mb-8">
-                    <div className="flex items-center space-x-4">
-                        <div className="text-4xl">
-                            {getRoleIcon(user.role)}
-                        </div>
+                {/* Header Section */}
+                <div className="mb-8">
+                    <div className="flex items-center justify-between mb-2">
                         <div>
-                            <h2 className="text-2xl font-bold text-white">
-                                Welcome back, {user.name}!
-                            </h2>
-                            <p className="text-slate-400">
-                                You're logged in as {getRoleDisplayName(user.role)}
-                            </p>
+                            <h2 className="text-3xl font-bold text-white">Platform Overview</h2>
+                            <p className="text-slate-400 mt-1">Comprehensive platform monitoring and management dashboard</p>
                         </div>
-                    </div>
-                </div>
-
-                {/* User Details Card */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div className="bg-slate-800 rounded-lg shadow-sm border border-slate-700 p-6">
-                        <h3 className="text-lg font-semibold text-white mb-4">User Information</h3>
-                        <div className="space-y-4">
-                            <div className="flex justify-between items-center py-2 border-b border-slate-700">
-                                <span className="text-slate-400 font-medium">User ID:</span>
-                                <span className="text-white font-mono text-sm">{user.userId}</span>
-                            </div>
-                            <div className="flex justify-between items-center py-2 border-b border-slate-700">
-                                <span className="text-slate-400 font-medium">Name:</span>
-                                <span className="text-white">{user.name}</span>
-                            </div>
-                            <div className="flex justify-between items-center py-2 border-b border-slate-700">
-                                <span className="text-slate-400 font-medium">Email:</span>
-                                <span className="text-white">{user.email}</span>
-                            </div>
-                            <div className="flex justify-between items-center py-2 border-b border-slate-700">
-                                <span className="text-slate-400 font-medium">Phone:</span>
-                                <span className="text-white">{user.phone}</span>
-                            </div>
-                            <div className="flex justify-between items-center py-2">
-                                <span className="text-slate-400 font-medium">Role:</span>
-                                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getRoleColor(user.role)}`}>
-                                    {getRoleIcon(user.role)} {getRoleDisplayName(user.role)}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Quick Stats or Actions */}
-                    <div className="bg-slate-800 rounded-lg shadow-sm border border-slate-700 p-6">
-                        <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
-                        <div className="space-y-3">
-                            {/* Create Admin User Dialog */}
-                            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                                <DialogTrigger asChild>
-                                    <button className="w-full text-left p-3 rounded-lg border border-slate-600 hover:bg-slate-700 transition-colors">
-                                        <div className="flex items-center space-x-3">
-                                            <span className="text-xl">➕</span>
-                                            <span className="text-white font-medium">Create Admin User</span>
-                                        </div>
-                                    </button>
-                                </DialogTrigger>
-                                <DialogContent className="sm:max-w-[500px] bg-slate-800 border-slate-700">
-                                    <DialogHeader>
-                                        <DialogTitle className="text-white">Create Admin User</DialogTitle>
-                                        <DialogDescription className="text-slate-400">
-                                            Fill in the details below to create a new admin user. All fields are required.
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                    <CreateAdminForm
-                                        onClose={() => setIsDialogOpen(false)}
-                                        onSuccess={() => setIsDialogOpen(false)}
-                                    />
-                                </DialogContent>
-                            </Dialog>
+                        <div className="flex items-center space-x-3">
+                            {user.role === 'superadmin' && (
+                                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                                    <DialogTrigger asChild>
+                                        <button
+                                            className="px-4 py-2 rounded-lg transition-colors text-white font-medium"
+                                            style={{ backgroundColor: 'var(--accent-green)' }}
+                                            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.85'}
+                                            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                                        >
+                                            + Create Admin
+                                        </button>
+                                    </DialogTrigger>
+                                    <DialogContent className="sm:max-w-[500px] bg-slate-800 border-slate-700">
+                                        <DialogHeader>
+                                            <DialogTitle className="text-white">Create Admin User</DialogTitle>
+                                            <DialogDescription className="text-slate-400">
+                                                Fill in the details below to create a new admin user. All fields are required.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <CreateAdminForm
+                                            onClose={() => setIsDialogOpen(false)}
+                                            onSuccess={() => setIsDialogOpen(false)}
+                                        />
+                                    </DialogContent>
+                                </Dialog>
+                            )}
                             <button
-                                onClick={() => handleQuickAction('Manage Users')}
-                                className="w-full text-left p-3 rounded-lg border border-slate-600 hover:bg-slate-700 transition-colors"
+                                onClick={handleRefresh}
+                                disabled={loading}
+                                className="flex items-center space-x-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors disabled:opacity-50"
                             >
-                                <div className="flex items-center space-x-3">
-                                    <span className="text-xl">👥</span>
-                                    <span className="text-white font-medium">Manage Users</span>
-                                </div>
-                            </button>
-                            <button
-                                onClick={() => handleQuickAction('System Settings')}
-                                className="w-full text-left p-3 rounded-lg border border-slate-600 hover:bg-slate-700 transition-colors"
-                            >
-                                <div className="flex items-center space-x-3">
-                                    <span className="text-xl">⚙️</span>
-                                    <span className="text-white font-medium">System Settings</span>
-                                </div>
-                            </button>
-                            <button
-                                onClick={() => handleQuickAction('View Reports')}
-                                className="w-full text-left p-3 rounded-lg border border-slate-600 hover:bg-slate-700 transition-colors"
-                            >
-                                <div className="flex items-center space-x-3">
-                                    <span className="text-xl">📊</span>
-                                    <span className="text-white font-medium">View Reports</span>
-                                </div>
-                            </button>
-                            <button
-                                onClick={() => handleQuickAction('Gym Management')}
-                                className="w-full text-left p-3 rounded-lg border border-slate-600 hover:bg-slate-700 transition-colors"
-                            >
-                                <div className="flex items-center space-x-3">
-                                    <span className="text-xl">🏥</span>
-                                    <span className="text-white font-medium">Gym Management</span>
-                                </div>
+                                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                                <span>Refresh</span>
                             </button>
                         </div>
                     </div>
                 </div>
 
-                {/* Additional Info */}
-                <div className="mt-8 bg-blue-900/30 border border-blue-700 rounded-lg p-4">
-                    <div className="flex items-center space-x-2">
-                        <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                {/* Metrics Cards */}
+                <DashboardMetrics metrics={metrics} loading={loading} />
+
+                {/* Growth Trends Chart and Top Performing Gyms */}
+                <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <UserRevenueChart />
+                    <TopPerformingGyms />
+                </div>
+
+                {/* Additional Info Banner */}
+                <div className="mt-6 bg-blue-900/20 border border-blue-700/50 rounded-lg p-4">
+                    <div className="flex items-start space-x-3">
+                        <svg className="h-5 w-5 text-blue-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                         </svg>
-                        <p className="text-blue-200 text-sm">
-                            You have {user.role === 'superadmin' ? 'full system access' : 'administrative privileges'} to manage the gym administration system.
-                        </p>
+                        <div>
+                            <p className="text-blue-200 text-sm font-medium">
+                                You have {user.role === 'superadmin' ? 'full system access' : 'administrative privileges'} to manage the gym administration system.
+                            </p>
+                            <p className="text-blue-300/70 text-xs mt-1">
+                                Last updated: {lastUpdated.toLocaleString()}
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>

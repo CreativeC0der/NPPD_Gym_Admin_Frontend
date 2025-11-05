@@ -27,6 +27,7 @@ import {
 import {
     Sidebar,
     SidebarContent,
+    SidebarFooter,
     SidebarGroup,
     SidebarGroupContent,
     SidebarGroupLabel,
@@ -39,6 +40,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import type { BreadcrumbData, BreadcrumbItem } from "./Layout"
+import { useAppSelector } from "@/hooks/hooks"
 
 // Navigation data
 const data = {
@@ -81,12 +83,26 @@ const data = {
             url: "#",
             icon: Users,
             badge: "1.2k",
+            items: [
+                {
+                    title: "All Users",
+                    url: "/users/all",
+                    icon: Users,
+                },
+            ],
         },
         {
             title: "Consultant Management",
             url: "#",
             icon: UserCog,
             badge: "47",
+            items: [
+                {
+                    title: "All Consultants",
+                    url: "/consultants/all",
+                    icon: UserCog,
+                },
+            ],
         },
         {
             title: "Platform Analytics",
@@ -162,6 +178,7 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
 export function AppSidebar({ onNavigate, ...props }: AppSidebarProps) {
     const navigate = useNavigate()
     const location = useLocation()
+    const { user } = useAppSelector((state) => state.user)
 
     const isActive = (url: string) => {
         if (url === "#") return false
@@ -179,46 +196,91 @@ export function AppSidebar({ onNavigate, ...props }: AppSidebarProps) {
         }
     }
 
+    const getRoleIcon = (role: string) => {
+        switch (role) {
+            case 'admin':
+                return '👑';
+            case 'superadmin':
+                return '⚡';
+            case 'consultant':
+                return '🩺';
+            case 'user':
+                return '👤';
+            default:
+                return '👤';
+        }
+    };
+
+    const getRoleDisplayName = (role: string) => {
+        switch (role) {
+            case 'admin':
+                return 'Executive Admin';
+            case 'superadmin':
+                return 'Super Admin';
+            case 'consultant':
+                return 'Consultant';
+            case 'user':
+                return 'User';
+            default:
+                return 'User';
+        }
+    };
+
+    const getRoleColor = (role: string) => {
+        switch (role) {
+            case 'admin':
+                return 'bg-blue-900 text-blue-300 border border-blue-700';
+            case 'superadmin':
+                return 'bg-purple-900 text-purple-300 border border-purple-700';
+            case 'consultant':
+                return 'bg-green-900 text-green-300 border border-green-700';
+            case 'user':
+                return 'bg-slate-700 text-slate-300 border border-slate-600';
+            default:
+                return 'bg-slate-700 text-slate-300 border border-slate-600';
+        }
+    };
+
     return (
         <Sidebar {...props} className="border-r border-slate-700 bg-slate-800">
-            <SidebarHeader className="border-b border-slate-700 p-4 space-y-4">
+            <SidebarHeader className="border-b border-slate-700 p-2 space-y-2">
                 {/* Header with Logo and Title */}
-                <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-500">
-                        <Crown className="h-6 w-6 text-white" />
+                <div className="flex items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500">
+                        <Crown className="h-4 w-4 text-white" />
                     </div>
                     <div className="flex-1">
-                        <h1 className="text-lg font-semibold text-white">HealthHub Admin</h1>
-                        <p className="text-sm text-slate-400">Platform Control Center</p>
+                        <h1 className="text-sm font-semibold text-white">HealthHub Admin</h1>
+                        <p className="text-xs text-slate-400">Control Center</p>
                     </div>
                 </div>
 
                 {/* Search Bar */}
                 <div className="relative">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <Search className="absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-slate-400" />
                     <Input
                         placeholder="Search admin functions..."
-                        className="pl-9 bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="pl-7 py-1 h-7 text-xs bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     />
                 </div>
             </SidebarHeader>
 
-            <SidebarContent className="px-3 py-4">
+            <SidebarContent className="px-2 py-2">
                 {/* System Status Section */}
-                <SidebarGroup className="mb-4">
-                    <SidebarGroupLabel className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                <SidebarGroup className="mb-2">
+                    <SidebarGroupLabel className="px-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
                         System Status
                     </SidebarGroupLabel>
                     <SidebarGroupContent>
                         <SidebarMenu>
                             {data.systemStatus.map((item) => (
                                 <SidebarMenuItem key={item.title}>
-                                    <div className="flex items-center justify-between px-4 py-3 text-sm">
-                                        <div className="flex items-center gap-2">
-                                            <item.icon className={`h-4 w-4 ${item.isHealthy ? 'text-green-500' : 'text-blue-400'}`} />
+                                    <div className="flex items-center justify-between px-2 py-1.5 text-xs">
+                                        <div className="flex items-center gap-1.5">
+                                            <item.icon className={`h-3 w-3 ${item.isHealthy ? 'text-green-500' : 'text-blue-400'}`} />
                                             <span className="text-white">{item.title}</span>
                                         </div>
-                                        <span className="text-slate-400">{item.status}</span>
+                                        <span className="text-slate-400 text-[10px]">{item.status}</span>
                                     </div>
                                 </SidebarMenuItem>
                             ))}
@@ -306,6 +368,44 @@ export function AppSidebar({ onNavigate, ...props }: AppSidebarProps) {
                     </SidebarMenu>
                 </SidebarGroup>
             </SidebarContent>
+
+            {/* Profile Footer */}
+            {user && (
+                <SidebarFooter className="border-t border-slate-700 p-4">
+                    <div className="space-y-3">
+                        {/* User Info */}
+                        <div className="flex items-center space-x-3">
+                            <div className="text-2xl">
+                                {getRoleIcon(user.role)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-white truncate">{user.name}</p>
+                                <p className="text-xs text-slate-400 truncate">{user.email}</p>
+                            </div>
+                        </div>
+
+                        {/* Role Badge */}
+                        <div className="flex items-center justify-between">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
+                                {getRoleIcon(user.role)} {getRoleDisplayName(user.role)}
+                            </span>
+                        </div>
+
+                        {/* User Details */}
+                        <div className="space-y-1.5 text-xs">
+                            <div className="flex justify-between items-center">
+                                <span className="text-slate-400">ID:</span>
+                                <span className="text-white font-mono">{user.userId}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-slate-400">Phone:</span>
+                                <span className="text-white">{user.phone}</span>
+                            </div>
+                        </div>
+                    </div>
+                </SidebarFooter>
+            )}
+
             <SidebarRail />
         </Sidebar>
     )

@@ -1,4 +1,3 @@
 curl -X 'GET' \
   'http: //localhost:10000/api/gyms' \
-  -H 'accept: application/json' \
-  -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4ZmI4ZWY1YjFhMzZmOTU5M2M3NDMyNSIsImlhdCI6MTc2MjA2MjY4NiwiZXhwIjoxNzY0NjU0Njg2fQ.psoPPrtHiLKvlENq9kCV4D_azii7r90PoQb0MLg8za0'
+  -H 'accept: application/json'

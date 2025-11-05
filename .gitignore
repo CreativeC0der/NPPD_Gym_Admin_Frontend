@@ -26,5 +26,6 @@ dist-ssr
 form-demo.tsx
 request-demo.tsx
 response-demo.tsx
+chart-demo.tsx
 
 .env
