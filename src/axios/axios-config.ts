@@ -1,9 +1,8 @@
 import axios, { type InternalAxiosRequestConfig } from 'axios';
 
 // Get environment variables with fallbacks
-const backendHost = import.meta.env.VITE_BACKEND_HOST || 'http://localhost';
-const backendPort = import.meta.env.VITE_BACKEND_PORT || '10000';
-const baseURL = `${backendHost}:${backendPort}/api`;
+const backendHost = import.meta.env.VITE_BACKEND_HOST || 'http://localhost:10000';
+const baseURL = `${backendHost}/api`;
 
 const api = axios.create({
     baseURL,
