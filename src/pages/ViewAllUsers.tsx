@@ -99,15 +99,15 @@ const ViewAllUsers: React.FC = () => {
             // Fetch actual data from API
             const response = await axios.get<ApiResponse>('/auth/users?role=user&page=1&limit=100&sortBy=createdAt&sortOrder=desc');
 
-            if (response.data && response.data.success) {
-                const userData = response.data.data;
+            if (response?.data?.success) {
+                const userData = response.data.data ?? [];
 
                 // Add mock statistics for demonstration (these would ideally come from backend)
                 const usersWithStats: User[] = userData.map((user: User) => ({
                     ...user,
                     // Determine status based on email/phone verification
-                    status: (user.emailVerified && user.phoneVerified ? 'active' :
-                        (!user.emailVerified || !user.phoneVerified) ? 'pending' : 'active') as 'active' | 'pending' | 'banned',
+                    status: (user?.emailVerified && user?.phoneVerified ? 'active' :
+                        (!user?.emailVerified || !user?.phoneVerified) ? 'pending' : 'active') as 'active' | 'pending' | 'banned',
                     // Add mock stats
                     sessions: Math.floor(Math.random() * 150) + 1,
                     healthScore: Math.floor(Math.random() * 30) + 70,
@@ -123,57 +123,61 @@ const ViewAllUsers: React.FC = () => {
         } catch (error) {
             console.error('Error fetching users:', error);
             showErrorToast('Failed to load users');
+            setUsers([]); // Set empty array on error
         } finally {
             setLoading(false);
         }
     };
 
     const calculateStats = (userData: User[]) => {
+        const safeUserData = userData ?? [];
         setStats({
-            totalUsers: userData.length,
-            activeUsers: userData.filter(u => u.status === 'active').length,
-            pendingApproval: userData.filter(u => u.status === 'pending').length,
-            gymAdmins: userData.filter(u => u.role === 'admin').length,
-            bannedUsers: userData.filter(u => u.status === 'banned').length,
+            totalUsers: safeUserData.length,
+            activeUsers: safeUserData.filter(u => u?.status === 'active').length,
+            pendingApproval: safeUserData.filter(u => u?.status === 'pending').length,
+            gymAdmins: safeUserData.filter(u => u?.role === 'admin').length,
+            bannedUsers: safeUserData.filter(u => u?.status === 'banned').length,
         });
     };
 
     const filterUsers = () => {
-        let filtered = [...users];
+        let filtered = [...(users ?? [])];
 
         // Apply search filter
         if (searchQuery) {
             filtered = filtered.filter(
                 (user) =>
-                    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    user.email.toLowerCase().includes(searchQuery.toLowerCase())
+                    user?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    user?.email?.toLowerCase().includes(searchQuery.toLowerCase())
             );
         }
 
         // Apply status filter
         if (statusFilter !== 'all') {
-            filtered = filtered.filter((user) => user.status === statusFilter);
+            filtered = filtered.filter((user) => user?.status === statusFilter);
         }
 
         // Apply role filter
         if (roleFilter !== 'all') {
-            filtered = filtered.filter((user) => user.role === roleFilter);
+            filtered = filtered.filter((user) => user?.role === roleFilter);
         }
 
         setFilteredUsers(filtered);
     };
 
     const getInitials = (name: string) => {
-        return name
+        const safeName = name ?? 'Unknown';
+        return safeName
             .split(' ')
-            .map(n => n[0])
+            .map(n => n?.[0] ?? '')
             .join('')
             .toUpperCase()
-            .slice(0, 2);
+            .slice(0, 2) || 'U';
     };
 
     const getStatusBadge = (status: string) => {
-        switch (status) {
+        const safeStatus = status ?? 'active';
+        switch (safeStatus) {
             case 'active':
                 return (
                     <Badge className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20">
@@ -193,12 +197,17 @@ const ViewAllUsers: React.FC = () => {
                     </Badge>
                 );
             default:
-                return null;
+                return (
+                    <Badge className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20">
+                        Active
+                    </Badge>
+                );
         }
     };
 
     const getRoleBadge = (role: string) => {
-        switch (role) {
+        const safeRole = role ?? 'user';
+        switch (safeRole) {
             case 'user':
                 return (
                     <Badge className="bg-blue-500/10 text-blue-400 border border-blue-500/20">
@@ -224,25 +233,33 @@ const ViewAllUsers: React.FC = () => {
                     </Badge>
                 );
             default:
-                return null;
+                return (
+                    <Badge className="bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                        User
+                    </Badge>
+                );
         }
     };
 
     const formatTimeAgo = (dateString: string) => {
-        const date = new Date(dateString);
-        const now = new Date();
-        const diffInMs = now.getTime() - date.getTime();
-        const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+        try {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffInMs = now.getTime() - date.getTime();
+            const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
 
-        if (diffInDays === 0) {
-            const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-            if (diffInHours === 0) {
-                const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-                return `${diffInMinutes}m ago`;
+            if (diffInDays === 0) {
+                const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+                if (diffInHours === 0) {
+                    const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+                    return `${diffInMinutes}m ago`;
+                }
+                return `${diffInHours}h ago`;
             }
-            return `${diffInHours}h ago`;
+            return `${diffInDays}d ago`;
+        } catch (error) {
+            return 'N/A';
         }
-        return `${diffInDays}d ago`;
     };
 
     const handleUserAction = (action: string, userId: string) => {
@@ -264,14 +281,14 @@ const ViewAllUsers: React.FC = () => {
                         className="bg-slate-900 border-slate-700 text-white hover:bg-slate-800"
                     >
                         <UserPlus className="w-4 h-4 mr-2" />
-                        Pending Approval ({stats.pendingApproval})
+                        Pending Approval ({stats?.pendingApproval ?? 0})
                     </Button>
                     <Button
                         variant="outline"
                         className="bg-slate-900 border-slate-700 text-white hover:bg-slate-800"
                     >
                         <Ban className="w-4 h-4 mr-2" />
-                        Banned Users ({stats.bannedUsers})
+                        Banned Users ({stats?.bannedUsers ?? 0})
                     </Button>
                 </div>
             </div>
@@ -316,23 +333,23 @@ const ViewAllUsers: React.FC = () => {
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
                 <div className="bg-slate-900 rounded-lg p-6 border border-slate-800">
-                    <div className="text-4xl font-bold text-blue-500 mb-2">{stats.totalUsers}</div>
+                    <div className="text-4xl font-bold text-blue-500 mb-2">{stats?.totalUsers ?? 0}</div>
                     <div className="text-slate-400 text-sm">Total Users</div>
                 </div>
                 <div className="bg-slate-900 rounded-lg p-6 border border-slate-800">
-                    <div className="text-4xl font-bold text-green-500 mb-2">{stats.activeUsers}</div>
+                    <div className="text-4xl font-bold text-green-500 mb-2">{stats?.activeUsers ?? 0}</div>
                     <div className="text-slate-400 text-sm">Active Users</div>
                 </div>
                 <div className="bg-slate-900 rounded-lg p-6 border border-slate-800">
-                    <div className="text-4xl font-bold text-yellow-500 mb-2">{stats.pendingApproval}</div>
+                    <div className="text-4xl font-bold text-yellow-500 mb-2">{stats?.pendingApproval ?? 0}</div>
                     <div className="text-slate-400 text-sm">Pending Approval</div>
                 </div>
                 <div className="bg-slate-900 rounded-lg p-6 border border-slate-800">
-                    <div className="text-4xl font-bold text-purple-500 mb-2">{stats.gymAdmins}</div>
+                    <div className="text-4xl font-bold text-purple-500 mb-2">{stats?.gymAdmins ?? 0}</div>
                     <div className="text-slate-400 text-sm">Gym Admins</div>
                 </div>
                 <div className="bg-slate-900 rounded-lg p-6 border border-slate-800">
-                    <div className="text-4xl font-bold text-red-500 mb-2">{stats.bannedUsers}</div>
+                    <div className="text-4xl font-bold text-red-500 mb-2">{stats?.bannedUsers ?? 0}</div>
                     <div className="text-slate-400 text-sm">Banned Users</div>
                 </div>
             </div>
@@ -350,7 +367,7 @@ const ViewAllUsers: React.FC = () => {
                 <div className="space-y-4">
                     {filteredUsers.map((user) => (
                         <div
-                            key={user._id}
+                            key={user?._id ?? Math.random()}
                             className="bg-slate-900 rounded-lg p-6 border border-slate-800 hover:border-slate-700 transition-colors"
                         >
                             <div className="flex items-start justify-between">
@@ -358,25 +375,25 @@ const ViewAllUsers: React.FC = () => {
                                     {/* Avatar */}
                                     <Avatar className="w-16 h-16 bg-slate-700">
                                         <AvatarFallback className="bg-slate-700 text-white text-lg font-semibold">
-                                            {getInitials(user.name)}
+                                            {getInitials(user?.name ?? 'Unknown')}
                                         </AvatarFallback>
                                     </Avatar>
 
                                     {/* User Info */}
                                     <div className="flex-1">
-                                        <h3 className="text-xl font-semibold text-white mb-2">{user.name}</h3>
+                                        <h3 className="text-xl font-semibold text-white mb-2">{user?.name ?? 'Unknown User'}</h3>
                                         <div className="flex flex-wrap items-center gap-4 mb-3 text-sm text-slate-400">
                                             <div className="flex items-center gap-2">
                                                 <Mail className="w-4 h-4" />
-                                                {user.email}
+                                                {user?.email ?? 'No email'}
                                             </div>
-                                            {user.phone && (
+                                            {user?.phone && (
                                                 <div className="flex items-center gap-2">
                                                     <Phone className="w-4 h-4" />
                                                     {user.phone}
                                                 </div>
                                             )}
-                                            {user.lastActive && (
+                                            {user?.lastActive && (
                                                 <div className="flex items-center gap-2">
                                                     <Clock className="w-4 h-4" />
                                                     {formatTimeAgo(user.lastActive)}
@@ -384,9 +401,9 @@ const ViewAllUsers: React.FC = () => {
                                             )}
                                         </div>
                                         <div className="flex flex-wrap items-center gap-2 mb-4">
-                                            {getStatusBadge(user.status || 'active')}
-                                            {getRoleBadge(user.role)}
-                                            {user.gym && (
+                                            {getStatusBadge(user?.status ?? 'active')}
+                                            {getRoleBadge(user?.role ?? 'user')}
+                                            {user?.gym?.name && (
                                                 <Badge className="bg-slate-800 text-slate-300 border-slate-700">
                                                     {user.gym.name}
                                                 </Badge>
@@ -396,19 +413,19 @@ const ViewAllUsers: React.FC = () => {
                                         {/* Stats */}
                                         <div className="grid grid-cols-4 gap-6">
                                             <div>
-                                                <div className="text-2xl font-bold text-white">{user.sessions || 0}</div>
+                                                <div className="text-2xl font-bold text-white">{user?.sessions ?? 0}</div>
                                                 <div className="text-sm text-slate-400">Sessions</div>
                                             </div>
                                             <div>
-                                                <div className="text-2xl font-bold text-white">{user.healthScore || 0}</div>
+                                                <div className="text-2xl font-bold text-white">{user?.healthScore ?? 0}</div>
                                                 <div className="text-sm text-slate-400">Health Score</div>
                                             </div>
                                             <div>
-                                                <div className="text-2xl font-bold text-white">{user.engagement || 0}%</div>
+                                                <div className="text-2xl font-bold text-white">{user?.engagement ?? 0}%</div>
                                                 <div className="text-sm text-slate-400">Engagement</div>
                                             </div>
                                             <div>
-                                                <div className="text-2xl font-bold text-white">{user.rating || 0}</div>
+                                                <div className="text-2xl font-bold text-white">{user?.rating ?? 0}</div>
                                                 <div className="text-sm text-slate-400">Rating</div>
                                             </div>
                                         </div>
@@ -429,36 +446,36 @@ const ViewAllUsers: React.FC = () => {
                                     <DropdownMenuContent className="bg-slate-900 border-slate-700 text-white">
                                         <DropdownMenuItem
                                             className="hover:bg-slate-800"
-                                            onClick={() => handleUserAction('View', user._id)}
+                                            onClick={() => handleUserAction('View', user?._id ?? '')}
                                         >
                                             View Details
                                         </DropdownMenuItem>
                                         <DropdownMenuItem
                                             className="hover:bg-slate-800"
-                                            onClick={() => handleUserAction('Edit', user._id)}
+                                            onClick={() => handleUserAction('Edit', user?._id ?? '')}
                                         >
                                             Edit User
                                         </DropdownMenuItem>
-                                        {user.status === 'pending' && (
+                                        {user?.status === 'pending' && (
                                             <DropdownMenuItem
                                                 className="hover:bg-slate-800"
-                                                onClick={() => handleUserAction('Approve', user._id)}
+                                                onClick={() => handleUserAction('Approve', user?._id ?? '')}
                                             >
                                                 Approve User
                                             </DropdownMenuItem>
                                         )}
-                                        {user.status !== 'banned' && (
+                                        {user?.status !== 'banned' && (
                                             <DropdownMenuItem
                                                 className="hover:bg-slate-800 text-red-400"
-                                                onClick={() => handleUserAction('Ban', user._id)}
+                                                onClick={() => handleUserAction('Ban', user?._id ?? '')}
                                             >
                                                 Ban User
                                             </DropdownMenuItem>
                                         )}
-                                        {user.status === 'banned' && (
+                                        {user?.status === 'banned' && (
                                             <DropdownMenuItem
                                                 className="hover:bg-slate-800 text-green-400"
-                                                onClick={() => handleUserAction('Unban', user._id)}
+                                                onClick={() => handleUserAction('Unban', user?._id ?? '')}
                                             >
                                                 Unban User
                                             </DropdownMenuItem>

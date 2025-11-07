@@ -79,7 +79,7 @@ const ViewAllGyms: React.FC = () => {
         try {
             setLoading(true);
             const response = await axios.get('/gyms');
-            const gymData = response.data;
+            const gymData = response?.data ?? [];
 
             // Add mock statistics for demonstration
             const gymsWithStats = gymData.map((gym: Gym) => ({
@@ -97,39 +97,41 @@ const ViewAllGyms: React.FC = () => {
         } catch (error) {
             console.error('Error fetching gyms:', error);
             showErrorToast('Failed to load gyms');
+            setGyms([]); // Set empty array on error
         } finally {
             setLoading(false);
         }
     };
 
     const calculateStats = (gymData: Gym[]) => {
-        const totalRevenue = gymData.reduce((sum, gym) => sum + (gym.monthlyRevenue || 0), 0);
+        const safeGymData = gymData ?? [];
+        const totalRevenue = safeGymData.reduce((sum, gym) => sum + (gym?.monthlyRevenue ?? 0), 0);
         setStats({
-            totalGyms: gymData.length,
-            activeGyms: gymData.filter(g => g.subscriptionPlan).length,
-            pendingApproval: Math.floor(gymData.length * 0.1), // Mock data
+            totalGyms: safeGymData.length,
+            activeGyms: safeGymData.filter(g => g?.subscriptionPlan).length,
+            pendingApproval: Math.floor(safeGymData.length * 0.1), // Mock data
             monthlyRevenue: totalRevenue,
         });
     };
 
     const filterGyms = () => {
-        let filtered = [...gyms];
+        let filtered = [...(gyms ?? [])];
 
         // Apply search filter
         if (searchQuery) {
             filtered = filtered.filter(
                 (gym) =>
-                    gym.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    gym.address.toLowerCase().includes(searchQuery.toLowerCase())
+                    gym?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    gym?.address?.toLowerCase().includes(searchQuery.toLowerCase())
             );
         }
 
         // Apply status filter
         if (statusFilter !== 'all') {
             if (statusFilter === 'active') {
-                filtered = filtered.filter((gym) => gym.subscriptionPlan);
+                filtered = filtered.filter((gym) => gym?.subscriptionPlan);
             } else if (statusFilter === 'pending') {
-                filtered = filtered.filter((gym) => !gym.subscriptionPlan);
+                filtered = filtered.filter((gym) => !gym?.subscriptionPlan);
             }
         }
 
@@ -137,19 +139,24 @@ const ViewAllGyms: React.FC = () => {
     };
 
     const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        } catch (error) {
+            return 'N/A';
+        }
     };
 
     const formatRevenue = (amount: number) => {
-        if (amount >= 1000) {
-            return `$${(amount / 1000).toFixed(0)}k`;
+        const safeAmount = amount ?? 0;
+        if (safeAmount >= 1000) {
+            return `$${(safeAmount / 1000).toFixed(0)}k`;
         }
-        return `$${amount}`;
+        return `$${safeAmount}`;
     };
 
     const getGymIcon = () => {
@@ -177,20 +184,20 @@ const ViewAllGyms: React.FC = () => {
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 <div className="bg-slate-900 rounded-lg p-6 border border-slate-800">
-                    <div className="text-4xl font-bold text-blue-500 mb-2">{stats.totalGyms}</div>
+                    <div className="text-4xl font-bold text-blue-500 mb-2">{stats?.totalGyms ?? 0}</div>
                     <div className="text-slate-400 text-sm">Total Gyms</div>
                 </div>
                 <div className="bg-slate-900 rounded-lg p-6 border border-slate-800">
-                    <div className="text-4xl font-bold text-green-500 mb-2">{stats.activeGyms}</div>
+                    <div className="text-4xl font-bold text-green-500 mb-2">{stats?.activeGyms ?? 0}</div>
                     <div className="text-slate-400 text-sm">Active Gyms</div>
                 </div>
                 <div className="bg-slate-900 rounded-lg p-6 border border-slate-800">
-                    <div className="text-4xl font-bold text-yellow-500 mb-2">{stats.pendingApproval}</div>
+                    <div className="text-4xl font-bold text-yellow-500 mb-2">{stats?.pendingApproval ?? 0}</div>
                     <div className="text-slate-400 text-sm">Pending Approval</div>
                 </div>
                 <div className="bg-slate-900 rounded-lg p-6 border border-slate-800">
                     <div className="text-4xl font-bold text-purple-500 mb-2">
-                        ${(stats.monthlyRevenue / 1000).toFixed(0)}k
+                        ${((stats?.monthlyRevenue ?? 0) / 1000).toFixed(0)}k
                     </div>
                     <div className="text-slate-400 text-sm">Monthly Subscription Revenue</div>
                 </div>
@@ -248,7 +255,7 @@ const ViewAllGyms: React.FC = () => {
                 <div className="space-y-4">
                     {filteredGyms.map((gym) => (
                         <div
-                            key={gym._id}
+                            key={gym?._id ?? Math.random()}
                             className="bg-slate-900 rounded-lg border border-slate-800 p-6 hover:border-slate-700 transition-colors"
                         >
                             {/* Gym Header */}
@@ -256,19 +263,19 @@ const ViewAllGyms: React.FC = () => {
                                 <div className="flex items-center gap-4">
                                     {getGymIcon()}
                                     <div>
-                                        <h3 className="text-xl font-bold mb-1">{gym.name}</h3>
+                                        <h3 className="text-xl font-bold mb-1">{gym?.name ?? 'Unknown Gym'}</h3>
                                         <div className="flex items-center gap-4 text-sm text-slate-400">
                                             <div className="flex items-center gap-1">
                                                 <MapPin className="w-4 h-4" />
-                                                {gym.address.split(',')[1] || 'Location'}
+                                                {gym?.address?.split(',')[1] ?? gym?.address ?? 'Location'}
                                             </div>
                                             <div className="flex items-center gap-1">
                                                 <Mail className="w-4 h-4" />
-                                                {gym.email}
+                                                {gym?.email ?? 'No email'}
                                             </div>
                                             <div className="flex items-center gap-1">
                                                 <Phone className="w-4 h-4" />
-                                                {gym.phone}
+                                                {gym?.phone ?? 'No phone'}
                                             </div>
                                         </div>
                                     </div>
@@ -306,37 +313,37 @@ const ViewAllGyms: React.FC = () => {
                             <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-4">
                                 <div className="text-center">
                                     <div className="text-2xl font-bold text-white mb-1">
-                                        {gym.totalUsers?.toLocaleString()}
+                                        {gym?.totalUsers?.toLocaleString() ?? 0}
                                     </div>
                                     <div className="text-xs text-slate-400">Total Users</div>
                                 </div>
                                 <div className="text-center">
                                     <div className="text-2xl font-bold text-green-500 mb-1">
-                                        {gym.activeUsers?.toLocaleString()}
+                                        {gym?.activeUsers?.toLocaleString() ?? 0}
                                     </div>
                                     <div className="text-xs text-slate-400">Active Users</div>
                                 </div>
                                 <div className="text-center">
                                     <div className="text-2xl font-bold text-white mb-1">
-                                        {formatRevenue(gym.monthlyRevenue || 0)}
+                                        {formatRevenue(gym?.monthlyRevenue ?? 0)}
                                     </div>
                                     <div className="text-xs text-slate-400">Monthly Revenue</div>
                                 </div>
                                 <div className="text-center">
                                     <div className="text-2xl font-bold text-white mb-1">
-                                        {gym.consultants}
+                                        {gym?.consultants ?? 0}
                                     </div>
                                     <div className="text-xs text-slate-400">Consultants</div>
                                 </div>
                                 <div className="text-center">
                                     <div className="text-2xl font-bold text-white mb-1">
-                                        {gym.utilization}%
+                                        {gym?.utilization ?? 0}%
                                     </div>
                                     <div className="text-xs text-slate-400">Utilization</div>
                                 </div>
                                 <div className="text-center">
                                     <div className="text-2xl font-bold text-white mb-1">
-                                        {gym.satisfaction}
+                                        {gym?.satisfaction ?? 'N/A'}
                                     </div>
                                     <div className="text-xs text-slate-400">Satisfaction</div>
                                 </div>
@@ -346,11 +353,11 @@ const ViewAllGyms: React.FC = () => {
                             <div className="flex items-center justify-between pt-4 border-t border-slate-800">
                                 <div className="flex items-center gap-6 text-sm text-slate-400">
                                     <div>
-                                        <span className="font-semibold text-white">Owner:</span> {gym.admin.name}
+                                        <span className="font-semibold text-white">Owner:</span> {gym?.admin?.name ?? 'Unknown'}
                                     </div>
                                     <div>
                                         <span className="font-semibold text-white">Plan:</span>{' '}
-                                        {gym.subscriptionPlan ? (
+                                        {gym?.subscriptionPlan ? (
                                             <span className="capitalize">{gym.subscriptionPlan}</span>
                                         ) : (
                                             <span className="text-yellow-500">Pending</span>
@@ -358,7 +365,7 @@ const ViewAllGyms: React.FC = () => {
                                     </div>
                                     <div>
                                         <span className="font-semibold text-white">Created:</span>{' '}
-                                        {formatDate(gym.createdAt)}
+                                        {formatDate(gym?.createdAt ?? '')}
                                     </div>
                                 </div>
                                 <Button
