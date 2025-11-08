@@ -114,32 +114,32 @@ const Dashboard: React.FC = () => {
                             <p className="text-slate-400 mt-1">Comprehensive platform monitoring and management dashboard</p>
                         </div>
                         <div className="flex items-center space-x-3">
-                            {user.role === 'superadmin' && (
-                                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                                    <DialogTrigger asChild>
-                                        <button
-                                            className="px-4 py-2 rounded-lg transition-colors text-white font-medium"
-                                            style={{ backgroundColor: 'var(--accent-green)' }}
-                                            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.85'}
-                                            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-                                        >
-                                            + Create Admin
-                                        </button>
-                                    </DialogTrigger>
-                                    <DialogContent className="sm:max-w-[500px] bg-slate-800 border-slate-700">
-                                        <DialogHeader>
-                                            <DialogTitle className="text-white">Create Admin User</DialogTitle>
-                                            <DialogDescription className="text-slate-400">
-                                                Fill in the details below to create a new admin user. All fields are required.
-                                            </DialogDescription>
-                                        </DialogHeader>
-                                        <CreateAdminForm
-                                            onClose={() => setIsDialogOpen(false)}
-                                            onSuccess={() => setIsDialogOpen(false)}
-                                        />
-                                    </DialogContent>
-                                </Dialog>
-                            )}
+
+                            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                                <DialogTrigger asChild>
+                                    <button
+                                        className="px-4 py-2 rounded-lg transition-colors text-white font-medium"
+                                        style={{ backgroundColor: 'var(--accent-green)' }}
+                                        onMouseEnter={(e) => e.currentTarget.style.opacity = '0.85'}
+                                        onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                                    >
+                                        + Create Admin
+                                    </button>
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-[500px] bg-slate-800 border-slate-700">
+                                    <DialogHeader>
+                                        <DialogTitle className="text-white">Create Admin User</DialogTitle>
+                                        <DialogDescription className="text-slate-400">
+                                            Fill in the details below to create a new admin user. All fields are required.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <CreateAdminForm
+                                        onClose={() => setIsDialogOpen(false)}
+                                        onSuccess={() => setIsDialogOpen(false)}
+                                    />
+                                </DialogContent>
+                            </Dialog>
+
                             <button
                                 onClick={handleRefresh}
                                 disabled={loading}

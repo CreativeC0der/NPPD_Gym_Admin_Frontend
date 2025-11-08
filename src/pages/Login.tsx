@@ -8,7 +8,6 @@ import { showSuccessToast, showErrorToast } from '../utils/toast';
 const Login: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [userType, setUserType] = useState('Admin');
     const [error, setError] = useState('');
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
@@ -90,29 +89,6 @@ const Login: React.FC = () => {
                         <p className="login-welcome-text">Sign in to your account to continue</p>
                     </div>
 
-                    {/* User Type Tabs */}
-                    <div className="user-type-tabs">
-                        {['Admin', 'Superadmin'].map((type) => (
-                            <button
-                                key={type}
-                                type="button"
-                                onClick={() => setUserType(type)}
-                                className={`user-type-tab ${userType === type
-                                    ? 'user-type-tab-active'
-                                    : 'user-type-tab-inactive'
-                                    }`}
-                            >
-                                {type === 'Admin' && (
-                                    <span style={{ marginRight: '0.25rem' }}>👑</span>
-                                )}
-                                {type === 'Superadmin' && (
-                                    <span style={{ marginRight: '0.25rem' }}>⚡</span>
-                                )}
-                                {type}
-                            </button>
-                        ))}
-                    </div>
-
                     <form onSubmit={handleSubmit} className="login-form">
                         {error && (
                             <div className="error-message" style={{
@@ -175,7 +151,7 @@ const Login: React.FC = () => {
                                     Signing in...
                                 </>
                             ) : (
-                                `Sign in as ${userType === 'Superadmin' ? 'Super Admin' : 'Executive Admin'}`
+                                'Sign in as Admin'
                             )}
                         </button>
                     </form>
