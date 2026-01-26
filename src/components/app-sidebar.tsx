@@ -108,6 +108,13 @@ const data = {
             title: "Platform Analytics",
             url: "#",
             icon: BarChart4,
+            items: [
+                {
+                    title: "Revenue Intelligence",
+                    url: "/revenue",
+                    icon: BarChart3,
+                },
+            ],
         },
         {
             title: "ML & Data Oversight",

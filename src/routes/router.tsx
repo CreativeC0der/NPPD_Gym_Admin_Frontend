@@ -7,6 +7,7 @@ import CreateGym from '../pages/CreateGym';
 import ViewAllGyms from '../pages/ViewAllGyms';
 import ViewAllUsers from '../pages/ViewAllUsers';
 import ViewAllConsultants from '../pages/ViewAllConsultants';
+import Revenue from '../pages/Revenue';
 
 export const router = createBrowserRouter([
     {
@@ -78,6 +79,20 @@ export const router = createBrowserRouter([
                 element: (
                     <Protected requiredRole={['superadmin', 'admin']}>
                         <ViewAllConsultants />
+                    </Protected>
+                ),
+            },
+        ],
+    },
+    {
+        path: '/revenue',
+        element: <Layout />,
+        children: [
+            {
+                index: true,
+                element: (
+                    <Protected requiredRole={['superadmin', 'admin']}>
+                        <Revenue />
                     </Protected>
                 ),
             },
