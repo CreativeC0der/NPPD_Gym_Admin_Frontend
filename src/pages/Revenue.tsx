@@ -25,6 +25,7 @@ interface Member {
     revenue: number;
     trainer: string;
     action: string;
+    paymentStatus: 'Pending' | 'Done';
 }
 
 const dummyMembers: Member[] = [
@@ -37,6 +38,7 @@ const dummyMembers: Member[] = [
         revenue: 15000,
         trainer: 'Priya Singh',
         action: 'Call & Offer Retention',
+        paymentStatus: 'Pending',
     },
     {
         name: 'Ananya Patel',
@@ -47,6 +49,7 @@ const dummyMembers: Member[] = [
         revenue: 10000,
         trainer: 'Vikram Raj',
         action: 'Reactivate with Promo',
+        paymentStatus: 'Done',
     },
     {
         name: 'Rohan Gupta',
@@ -57,6 +60,7 @@ const dummyMembers: Member[] = [
         revenue: 20000,
         trainer: 'Sara Ali',
         action: 'Pitch Premium Package',
+        paymentStatus: 'Pending',
     },
     {
         name: 'Isha Desai',
@@ -67,6 +71,7 @@ const dummyMembers: Member[] = [
         revenue: 12000,
         trainer: 'Rahul Verma',
         action: 'Urgent Renewal Call',
+        paymentStatus: 'Pending',
     },
     {
         name: 'Karan Malhotra',
@@ -77,6 +82,7 @@ const dummyMembers: Member[] = [
         revenue: 18000,
         trainer: 'Priya Singh',
         action: 'Re-engagement Email',
+        paymentStatus: 'Done',
     },
     {
         name: 'Nikhil Kumar',
@@ -87,6 +93,7 @@ const dummyMembers: Member[] = [
         revenue: 25000,
         trainer: 'Vikram Raj',
         action: 'Offer Personal Training',
+        paymentStatus: 'Done',
     },
     {
         name: 'Sanya Reddy',
@@ -97,6 +104,7 @@ const dummyMembers: Member[] = [
         revenue: 14000,
         trainer: 'Sara Ali',
         action: 'Schedule Check-in',
+        paymentStatus: 'Pending',
     },
     {
         name: 'Arjun Kapoor',
@@ -107,6 +115,7 @@ const dummyMembers: Member[] = [
         revenue: 11000,
         trainer: 'Rahul Verma',
         action: 'Send Win-back Offer',
+        paymentStatus: 'Done',
     },
     {
         name: 'Meera Joshi',
@@ -117,6 +126,7 @@ const dummyMembers: Member[] = [
         revenue: 22000,
         trainer: 'Priya Singh',
         action: 'Suggest Nutrition Plan',
+        paymentStatus: 'Pending',
     },
     {
         name: 'Kabir Singh',
@@ -127,6 +137,7 @@ const dummyMembers: Member[] = [
         revenue: 16000,
         trainer: 'Vikram Raj',
         action: 'Discuss Membership Options',
+        paymentStatus: 'Pending',
     },
 ];
 
@@ -147,6 +158,15 @@ const chartConfig = {
 };
 
 const Revenue: React.FC = () => {
+    // Total revenue (estimated from all members across platform)
+    const totalRevenue = 3000000; // ₹30,00,000
+
+    // Revenue at Risk value
+    const revenueAtRisk = 485000;
+
+    // Calculate percentage of total revenue
+    const revenueAtRiskPercentage = ((revenueAtRisk / totalRevenue) * 100).toFixed(1);
+
     const getStatusBadge = (status: Member['status']) => {
         switch (status) {
             case 'renewal-risk':
@@ -170,6 +190,23 @@ const Revenue: React.FC = () => {
         }
     };
 
+    const getPaymentStatusBadge = (paymentStatus: 'Pending' | 'Done') => {
+        switch (paymentStatus) {
+            case 'Pending':
+                return (
+                    <Badge className="bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 hover:bg-yellow-500/20">
+                        Pending
+                    </Badge>
+                );
+            case 'Done':
+                return (
+                    <Badge className="bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/20">
+                        Done
+                    </Badge>
+                );
+        }
+    };
+
     const formatCurrency = (amount: number) => {
         return `₹${amount.toLocaleString('en-IN')}`;
     };
@@ -183,10 +220,24 @@ const Revenue: React.FC = () => {
             </div>
 
             {/* KPI Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+                <div className="bg-slate-900 rounded-lg p-6 border border-slate-800">
+                    <div className="text-slate-400 text-sm mb-2">Renewal Rate (Last 30 Days)</div>
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="text-4xl font-bold text-blue-500">72%</div>
+                        <div className="flex items-center text-green-400">
+                            <TrendingUp className="h-4 w-4" />
+                            <span className="text-sm ml-1">4.2%</span>
+                        </div>
+                    </div>
+                    <div className="text-slate-400 text-sm">Performance Context</div>
+                </div>
                 <div className="bg-slate-900 rounded-lg p-6 border border-slate-800">
                     <div className="text-slate-400 text-sm mb-2">Revenue at Risk (Next 30 Days)</div>
-                    <div className="text-4xl font-bold text-red-500 mb-2">₹4,85,000</div>
+                    <div className="flex items-baseline gap-2 mb-2">
+                        <div className="text-4xl font-bold text-red-500">{formatCurrency(revenueAtRisk)}</div>
+                        <div className="text-lg font-semibold text-slate-400">({revenueAtRiskPercentage}%)</div>
+                    </div>
                     <div className="text-slate-400 text-sm">Expiring Membership Value</div>
                 </div>
                 <div className="bg-slate-900 rounded-lg p-6 border border-slate-800">
@@ -206,10 +257,10 @@ const Revenue: React.FC = () => {
                 </div>
             </div>
 
-            {/* Member Details Table */}
+            {/* Revenue Action Center Table */}
             <div className="bg-slate-900 rounded-lg border border-slate-800 p-6 mb-6">
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-semibold text-white">Member Details</h2>
+                    <h2 className="text-xl font-semibold text-white">Revenue Action Center</h2>
                     <div className="text-sm text-slate-400">{dummyMembers.length} members</div>
                 </div>
 
@@ -225,6 +276,7 @@ const Revenue: React.FC = () => {
                                 <TableHead className="text-slate-400 font-semibold">Revenue Value (₹)</TableHead>
                                 <TableHead className="text-slate-400 font-semibold">Assigned Trainer</TableHead>
                                 <TableHead className="text-slate-400 font-semibold">Action</TableHead>
+                                <TableHead className="text-slate-400 font-semibold">Payment Status</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -243,6 +295,7 @@ const Revenue: React.FC = () => {
                                     </TableCell>
                                     <TableCell className="text-slate-300">{member.trainer}</TableCell>
                                     <TableCell className="text-slate-300 text-sm">{member.action}</TableCell>
+                                    <TableCell>{getPaymentStatusBadge(member.paymentStatus)}</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
