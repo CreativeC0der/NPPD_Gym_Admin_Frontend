@@ -44,11 +44,8 @@ import { useAppSelector } from "@/hooks/hooks"
 
 // Navigation data
 const data = {
-    systemStatus: [
-        { title: "API", status: "45ms", icon: CheckCircle2, isHealthy: true },
-        { title: "Database", status: "12 conn", icon: CheckCircle2, isHealthy: true },
-        { title: "ML Pipeline", status: "3 jobs", icon: Activity, isHealthy: true },
-    ],
+    systemStatus: [],
+    // { title: "API", status: "45ms", icon: CheckCircle2, isHealthy: true }
     navMain: [
         {
             title: "Platform Overview",
@@ -262,19 +259,11 @@ export function AppSidebar({ onNavigate, ...props }: AppSidebarProps) {
                     </div>
                 </div>
 
-                {/* Search Bar */}
-                <div className="relative">
-                    <Search className="absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-slate-400" />
-                    <Input
-                        placeholder="Search admin functions..."
-                        className="pl-7 py-1 h-7 text-xs bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    />
-                </div>
             </SidebarHeader>
 
             <SidebarContent className="px-2 py-2">
                 {/* System Status Section */}
-                <SidebarGroup className="mb-2">
+                {/* <SidebarGroup className="">
                     <SidebarGroupLabel className="px-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
                         System Status
                     </SidebarGroupLabel>
@@ -293,7 +282,7 @@ export function AppSidebar({ onNavigate, ...props }: AppSidebarProps) {
                             ))}
                         </SidebarMenu>
                     </SidebarGroupContent>
-                </SidebarGroup>
+                </SidebarGroup> */}
 
                 {/* Navigation Menu */}
                 <SidebarGroup>
