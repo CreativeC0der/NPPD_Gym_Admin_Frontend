@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import api from "@/axios/axios-config";
 import { showSuccessToast, showErrorToast } from "@/utils/toast";
 import type { CheckedState } from "@radix-ui/react-checkbox";

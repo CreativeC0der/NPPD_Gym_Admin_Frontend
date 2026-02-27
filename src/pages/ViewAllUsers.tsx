@@ -9,10 +9,10 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Search, UserPlus, Ban, MoreVertical, Mail, Phone, Clock } from 'lucide-react';
+import { Search, MoreVertical, Mail, Phone, Clock } from 'lucide-react';
 import axios from '@/axios/axios-config';
 import { showSuccessToast, showErrorToast } from '@/utils/toast';
-import type User from "../types/User"
+import type User from "../types/User";
 import Pagination from '@/components/Pagination';
 import UserDetailDialog from '@/components/UserDetailDialog';
 import CreateUserDialog from '@/components/CreateUserDialog';
@@ -36,8 +36,6 @@ const ViewAllUsers: React.FC = () => {
     const [users, setUsers] = useState<User[]>([]);
     const [searchQuery, setSearchQuery] = useState(''); // used for API
     const [searchInput, setSearchInput] = useState(''); // used for input field
-    const [statusFilter, setStatusFilter] = useState('all');
-    const [roleFilter, setRoleFilter] = useState('all');
     const [loading, setLoading] = useState(true);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -51,14 +49,6 @@ const ViewAllUsers: React.FC = () => {
     // Only filter by status and role locally, not by searchQuery
     const getLocallyFilteredUsers = () => {
         let filtered = [...(users ?? [])];
-        // Apply status filter
-        if (statusFilter !== 'all') {
-            filtered = filtered.filter((user) => user?.status === statusFilter);
-        }
-        // Apply role filter
-        if (roleFilter !== 'all') {
-            filtered = filtered.filter((user) => user?.role === roleFilter);
-        }
         return filtered;
     };
 

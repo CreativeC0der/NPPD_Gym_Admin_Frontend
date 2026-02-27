@@ -2,11 +2,7 @@ import * as React from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import {
     ChevronRight,
-    Crown,
-    Search,
-    CheckCircle2,
-    Activity,
-    LayoutGrid,
+    Crown, LayoutGrid,
     Dumbbell,
     Building2,
     PlusSquare,
@@ -29,15 +25,12 @@ import {
     SidebarContent,
     SidebarFooter,
     SidebarGroup,
-    SidebarGroupContent,
-    SidebarGroupLabel,
-    SidebarHeader,
+    SidebarGroupContent, SidebarHeader,
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
-    SidebarRail,
+    SidebarRail
 } from "@/components/ui/sidebar"
-import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import type { BreadcrumbData, BreadcrumbItem } from "./Layout"
 import { useAppSelector } from "@/hooks/hooks"
