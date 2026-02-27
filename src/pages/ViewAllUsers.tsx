@@ -127,13 +127,6 @@ const ViewAllUsers: React.FC = () => {
         showSuccessToast(`User ${action} successfully`);
     };
 
-    // Add a handler to refresh users after creating a new user
-    const handleUserCreated = () => {
-        setPage(1);
-        setSearchQuery("");
-        fetchUsers(1, "");
-    };
-
     return (
         <div className="flex flex-col min-h-screen bg-slate-950 text-white p-6">
             {/* User Details Dialog */}
