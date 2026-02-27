@@ -33,6 +33,14 @@ const defaultForm = {
     subscriptionType: "basic",
     isHiwoxMember: false,
     subscriptionRenewalDate: "",
+    gender: "male",
+    dateOfBirth: "",
+    address: {
+        street: "",
+        city: "",
+        state: "",
+        pincode: "",
+    },
 };
 
 export default function CreateUserDialog({ onUserCreated }: { onUserCreated?: () => void }) {
@@ -44,7 +52,16 @@ export default function CreateUserDialog({ onUserCreated }: { onUserCreated?: ()
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
     ) => {
         const { name, value, type } = e.target;
-        if (type === "checkbox") {
+        if (name.startsWith("address.")) {
+            const addressField = name.split(".")[1];
+            setForm((prev) => ({
+                ...prev,
+                address: {
+                    ...prev.address,
+                    [addressField]: value,
+                },
+            }));
+        } else if (type === "checkbox") {
             setForm((prev) => ({
                 ...prev,
                 [name]: (e.target as HTMLInputElement).checked,
@@ -78,6 +95,13 @@ export default function CreateUserDialog({ onUserCreated }: { onUserCreated?: ()
                 joiningDate: form.joiningDate ? new Date(form.joiningDate).toISOString() : undefined,
                 leavingDate: form.leavingDate ? new Date(form.leavingDate).toISOString() : undefined,
                 subscriptionRenewalDate: form.subscriptionRenewalDate ? new Date(form.subscriptionRenewalDate).toISOString() : undefined,
+                dateOfBirth: form.dateOfBirth ? new Date(form.dateOfBirth).toISOString() : undefined,
+                address: {
+                    street: form.address.street,
+                    city: form.address.city,
+                    state: form.address.state,
+                    pincode: form.address.pincode,
+                },
             };
             await api.post("/auth/register", payload);
             showSuccessToast("User created successfully");
@@ -96,7 +120,7 @@ export default function CreateUserDialog({ onUserCreated }: { onUserCreated?: ()
             <DialogTrigger asChild>
                 <Button variant="default">Create User</Button>
             </DialogTrigger>
-            <DialogContent className="bg-slate-950 text-white border border-slate-800 max-w-3xl w-full">
+            <DialogContent className="bg-slate-950 text-white border border-slate-800 max-w-3xl w-full max-h-[80vh] overflow-y-auto">
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <DialogHeader>
                         <DialogTitle>Create New User</DialogTitle>
@@ -189,6 +213,60 @@ export default function CreateUserDialog({ onUserCreated }: { onUserCreated?: ()
                         <div>
                             <Label htmlFor="subscriptionRenewalDate" className="my-2">Subscription Renewal Date</Label>
                             <Input id="subscriptionRenewalDate" name="subscriptionRenewalDate" type="date" value={form.subscriptionRenewalDate} onChange={handleChange} />
+                        </div>
+                        <div>
+                            <Label htmlFor="gender" className="my-2">Gender</Label>
+                            <Select value={form.gender} onValueChange={(v) => handleSelectChange("gender", v)}>
+                                <SelectTrigger id="gender" name="gender">
+                                    <SelectValue placeholder="Select gender" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="male">Male</SelectItem>
+                                    <SelectItem value="female">Female</SelectItem>
+                                    <SelectItem value="other">Other</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div>
+                            <Label htmlFor="dateOfBirth" className="my-2">Date of Birth</Label>
+                            <Input id="dateOfBirth" name="dateOfBirth" type="date" value={form.dateOfBirth} onChange={handleChange} required />
+                        </div>
+                        <div className="col-span-2">
+                            <Label className="my-2">Address</Label>
+                            <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                                <Input
+                                    id="address.street"
+                                    name="address.street"
+                                    placeholder="Street"
+                                    value={form.address.street}
+                                    onChange={handleChange}
+                                    required
+                                />
+                                <Input
+                                    id="address.city"
+                                    name="address.city"
+                                    placeholder="City"
+                                    value={form.address.city}
+                                    onChange={handleChange}
+                                    required
+                                />
+                                <Input
+                                    id="address.state"
+                                    name="address.state"
+                                    placeholder="State"
+                                    value={form.address.state}
+                                    onChange={handleChange}
+                                    required
+                                />
+                                <Input
+                                    id="address.pincode"
+                                    name="address.pincode"
+                                    placeholder="Pincode"
+                                    value={form.address.pincode}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
                         </div>
                     </div>
                     <DialogFooter>
