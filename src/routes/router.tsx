@@ -8,6 +8,8 @@ import ViewAllGyms from '../pages/ViewAllGyms';
 import ViewAllUsers from '../pages/ViewAllUsers';
 import ViewAllConsultants from '../pages/ViewAllConsultants';
 import Revenue from '../pages/Revenue';
+import CreateUser from '../pages/CreateUser';
+import UserExcelUploadPage from '../pages/UserExcelUploadPage';
 
 export const router = createBrowserRouter([
     {
@@ -93,6 +95,34 @@ export const router = createBrowserRouter([
                 element: (
                     <Protected requiredRole={['superadmin', 'admin']}>
                         <Revenue />
+                    </Protected>
+                ),
+            },
+        ],
+    },
+    {
+        path: '/user/create',
+        element: <Layout />,
+        children: [
+            {
+                index: true,
+                element: (
+                    <Protected requiredRole={['superadmin', 'admin']}>
+                        <CreateUser />
+                    </Protected>
+                ),
+            },
+        ],
+    },
+    {
+        path: '/users/upload',
+        element: <Layout />,
+        children: [
+            {
+                index: true,
+                element: (
+                    <Protected requiredRole={['superadmin', 'admin']}>
+                        <UserExcelUploadPage />
                     </Protected>
                 ),
             },

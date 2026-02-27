@@ -233,13 +233,6 @@ const ViewAllGyms: React.FC = () => {
                     <BarChart3 className="w-4 h-4 mr-2" />
                     Analytics
                 </Button>
-                <Button
-                    onClick={() => navigate('/gyms/create')}
-                    className="bg-purple-600 hover:bg-purple-700 text-white"
-                >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create Gym
-                </Button>
             </div>
 
             {/* Gym Cards */}

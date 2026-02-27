@@ -15,7 +15,6 @@ import { showSuccessToast, showErrorToast } from '@/utils/toast';
 import type User from "../types/User";
 import Pagination from '@/components/Pagination';
 import UserDetailDialog from '@/components/UserDetailDialog';
-import CreateUserDialog from '@/components/CreateUserDialog';
 
 interface ApiResponse {
     success: boolean;
@@ -151,7 +150,6 @@ const ViewAllUsers: React.FC = () => {
                     <h1 className="text-3xl font-bold mb-2">User Management</h1>
                     <p className="text-slate-400">Manage platform users, permissions, and account status</p>
                 </div>
-                <CreateUserDialog onUserCreated={handleUserCreated} />
             </div>
 
             {/* Search and Filter Bar */}

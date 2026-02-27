@@ -2,17 +2,7 @@ import * as React from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import {
     ChevronRight,
-    Crown, LayoutGrid,
-    Dumbbell,
-    Building2,
-    PlusSquare,
-    BarChart3,
-    Users,
-    UserCog,
-    BarChart4,
-    Brain,
-    FileText,
-    Settings
+    Crown
 } from "lucide-react"
 
 import {
@@ -34,104 +24,20 @@ import {
 import { Badge } from "@/components/ui/badge"
 import type { BreadcrumbData, BreadcrumbItem } from "./Layout"
 import { useAppSelector } from "@/hooks/hooks"
+import { getSidebarData } from "@/lib/sidebarData"
 
 // Navigation data
-const data = {
-    systemStatus: [],
-    // { title: "API", status: "45ms", icon: CheckCircle2, isHealthy: true }
-    navMain: [
-        {
-            title: "Platform Overview",
-            url: "/dashboard",
-            icon: LayoutGrid,
-        },
-        {
-            title: "Gym Management",
-            url: "#",
-            icon: Dumbbell,
-            badge: "24",
-            items: [
-                {
-                    title: "All Gyms",
-                    url: "/gyms/all",
-                    icon: Building2,
-                },
-                {
-                    title: "Create Gym",
-                    url: "/gyms/create",
-                    icon: PlusSquare,
-                },
-                {
-                    title: "Gym Analytics",
-                    url: "#",
-                    icon: BarChart3,
-                },
-            ],
-        },
-        {
-            title: "User Management",
-            url: "#",
-            icon: Users,
-            badge: "1.2k",
-            items: [
-                {
-                    title: "All Users",
-                    url: "/users/all",
-                    icon: Users,
-                },
-            ],
-        },
-        {
-            title: "Consultant Management",
-            url: "#",
-            icon: UserCog,
-            badge: "47",
-            items: [
-                {
-                    title: "All Consultants",
-                    url: "/consultants/all",
-                    icon: UserCog,
-                },
-            ],
-        },
-        {
-            title: "Platform Analytics",
-            url: "#",
-            icon: BarChart4,
-            items: [
-                {
-                    title: "Revenue Intelligence",
-                    url: "/revenue",
-                    icon: BarChart3,
-                },
-            ],
-        },
-        {
-            title: "ML & Data Oversight",
-            url: "#",
-            icon: Brain,
-            badge: "3",
-        },
-        {
-            title: "Export & Reporting",
-            url: "#",
-            icon: FileText,
-        },
-        {
-            title: "System Tools",
-            url: "#",
-            icon: Settings,
-            badge: "2",
-        },
-    ],
-}
 
 // Recursive function to search through nested navigation items
 function findRouteInNavigation(
-    items: any[],
+    items: any[] | undefined,
     pathname: string,
     breadcrumbTrail: BreadcrumbItem[] = []
 ): BreadcrumbItem[] | null {
+    if (!Array.isArray(items) || items.length === 0) {
+        return null;
+    }
+
     for (const item of items) {
         const currentTrail = [...breadcrumbTrail, { title: item.title, url: item.url }];
 
@@ -154,9 +60,9 @@ function findRouteInNavigation(
 
 // Function to get breadcrumb data from route - Single source of truth
 // Supports unlimited nesting levels
-export function getBreadcrumbFromRoute(pathname: string): BreadcrumbData {
+export function getBreadcrumbFromRoute(pathname: string, navMain?: any[]): BreadcrumbData {
     // Search through navigation data to find matching route
-    const breadcrumbTrail = findRouteInNavigation(data.navMain, pathname);
+    const breadcrumbTrail = findRouteInNavigation(navMain ?? [], pathname);
 
     if (breadcrumbTrail) {
         return { items: breadcrumbTrail };
@@ -176,6 +82,10 @@ export function AppSidebar({ onNavigate, ...props }: AppSidebarProps) {
     const navigate = useNavigate()
     const location = useLocation()
     const { user } = useAppSelector((state) => state.user)
+    if (!user)
+        return;
+
+    const data = getSidebarData(user)
 
     const isActive = (url: string) => {
         if (url === "#") return false
@@ -187,7 +97,7 @@ export function AppSidebar({ onNavigate, ...props }: AppSidebarProps) {
             navigate(url)
             // Update breadcrumb when navigating - uses getBreadcrumbFromRoute as single source of truth
             if (onNavigate) {
-                const breadcrumbData = getBreadcrumbFromRoute(url);
+                const breadcrumbData = getBreadcrumbFromRoute(url, data.navMain);
                 onNavigate(breadcrumbData);
             }
         }

@@ -1,0 +1,4 @@
+name,age,phone,email,password,role,consent,privacyNoticeAccepted,joiningDate,leavingDate,reasonOfLeaving,subscriptionType,isHiwoxMember,subscriptionRenewalDate,gender,dateOfBirth,address.street,address.city,address.state,address.pincode
+John Carter,29,1111188888,john.carter@example.com,Pass@123,user,true,true,2026-02-27,,,basic,false,2026-03-29,male,1996-05-14,12 Oak Street,Austin,Texas,73301
+Maya Singh,34,1414151515,maya.singh1@example.com,Pass@123,consultant,true,true,2026-02-27,,,premium,true,2026-04-28,female,1991-11-02,88 Lake View,Seattle,Washington,98101
+Alex Green,41,4444455555,alex.green@example.com,Pass@123,user,true,true,2025-10-30,2026-02-07,Relocation,super,false,,other,1984-02-20,45 Pine Ave,Denver,Colorado,80202
