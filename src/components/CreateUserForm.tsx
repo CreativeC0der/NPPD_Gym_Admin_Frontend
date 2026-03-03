@@ -16,11 +16,11 @@ import {
 } from "@/components/ui/field";
 
 const defaultForm = {
-    name: "",
-    age: "",
+    firstName: "",
+    middleName: "",
+    lastName: "",
     phone: "",
     email: "",
-    password: "",
     role: "user",
     consent: false,
     privacyNoticeAccepted: false,
@@ -43,6 +43,22 @@ const defaultForm = {
 export default function CreateUserForm({ onUserCreated }: { onUserCreated?: () => void }) {
     const [form, setForm] = useState(defaultForm);
     const [loading, setLoading] = useState(false);
+
+    const getAgeFromDateOfBirth = (dateOfBirth: string) => {
+        if (!dateOfBirth) return undefined;
+        const dob = new Date(dateOfBirth);
+        if (Number.isNaN(dob.getTime())) return undefined;
+
+        const today = new Date();
+        let age = today.getFullYear() - dob.getFullYear();
+        const monthDiff = today.getMonth() - dob.getMonth();
+
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+            age -= 1;
+        }
+
+        return age >= 0 ? age : undefined;
+    };
 
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -83,8 +99,13 @@ export default function CreateUserForm({ onUserCreated }: { onUserCreated?: () =
         setLoading(true);
         try {
             const payload = {
-                ...form,
-                age: form.age ? Number(form.age) : undefined,
+                name: [form.firstName, form.middleName, form.lastName].filter(Boolean).join(" "),
+                email: form.email,
+                phone: form.phone,
+                gender: form.gender,
+                role: form.role,
+                subscriptionType: form.subscriptionType,
+                age: getAgeFromDateOfBirth(form.dateOfBirth),
                 consent: Boolean(form.consent),
                 privacyNoticeAccepted: Boolean(form.privacyNoticeAccepted),
                 isHiwoxMember: Boolean(form.isHiwoxMember),
@@ -117,42 +138,65 @@ export default function CreateUserForm({ onUserCreated }: { onUserCreated?: () =
             <FieldGroup>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Field>
-                        <FieldLabel htmlFor="name" className="text-slate-300">Name</FieldLabel>
+                        <FieldLabel htmlFor="firstName" className="text-slate-300">First Name *</FieldLabel>
                         <FieldContent>
-                            <Input id="name" name="name" value={form.name} onChange={handleChange} required className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500" />
-                            <FieldDescription className="text-slate-400">Enter the user's full name</FieldDescription>
+                            <Input id="firstName" name="firstName" value={form.firstName} onChange={handleChange} required className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500" />
+                            <FieldDescription className="text-slate-400">Enter the user's first name</FieldDescription>
                         </FieldContent>
                     </Field>
                     <Field>
-                        <FieldLabel htmlFor="age" className="text-slate-300">Age</FieldLabel>
+                        <FieldLabel htmlFor="middleName" className="text-slate-300">Middle Name </FieldLabel>
                         <FieldContent>
-                            <Input id="age" name="age" type="number" value={form.age} onChange={handleChange} required min={0} className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500" />
-                            <FieldDescription className="text-slate-400">User's age</FieldDescription>
+                            <Input id="middleName" name="middleName" value={form.middleName} onChange={handleChange} className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500" />
+                            <FieldDescription className="text-slate-400">Enter the user's middle name</FieldDescription>
                         </FieldContent>
                     </Field>
                     <Field>
-                        <FieldLabel htmlFor="phone" className="text-slate-300">Phone</FieldLabel>
+                        <FieldLabel htmlFor="lastName" className="text-slate-300">Last Name *</FieldLabel>
+                        <FieldContent>
+                            <Input id="lastName" name="lastName" value={form.lastName} onChange={handleChange} required className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500" />
+                            <FieldDescription className="text-slate-400">Enter the user's last name</FieldDescription>
+                        </FieldContent>
+                    </Field>
+                    <Field>
+                        <FieldLabel htmlFor="phone" className="text-slate-300">Phone Number *</FieldLabel>
                         <FieldContent>
                             <Input id="phone" name="phone" value={form.phone} onChange={handleChange} required className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500" />
                             <FieldDescription className="text-slate-400">User's phone number</FieldDescription>
                         </FieldContent>
                     </Field>
                     <Field>
-                        <FieldLabel htmlFor="email" className="text-slate-300">Email</FieldLabel>
+                        <FieldLabel htmlFor="email" className="text-slate-300">Email *</FieldLabel>
                         <FieldContent>
                             <Input id="email" name="email" type="email" value={form.email} onChange={handleChange} required className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500" />
                             <FieldDescription className="text-slate-400">User's email address</FieldDescription>
                         </FieldContent>
                     </Field>
                     <Field>
-                        <FieldLabel htmlFor="password" className="text-slate-300">Password</FieldLabel>
+                        <FieldLabel htmlFor="gender" className="text-slate-300">Gender</FieldLabel>
                         <FieldContent>
-                            <Input id="password" name="password" type="password" value={form.password} onChange={handleChange} required className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500" />
-                            <FieldDescription className="text-slate-400">Set a password for the user</FieldDescription>
+                            <Select value={form.gender} onValueChange={(v: string) => handleSelectChange("gender", v)}>
+                                <SelectTrigger id="gender" name="gender" className="bg-slate-700 border-slate-600 text-white">
+                                    <SelectValue placeholder="Select gender" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="male">Male</SelectItem>
+                                    <SelectItem value="female">Female</SelectItem>
+                                    <SelectItem value="other">Other</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <FieldDescription className="text-slate-400">User's gender</FieldDescription>
                         </FieldContent>
                     </Field>
                     <Field>
-                        <FieldLabel htmlFor="role" className="text-slate-300">Role</FieldLabel>
+                        <FieldLabel htmlFor="dateOfBirth" className="text-slate-300">Date of Birth *</FieldLabel>
+                        <FieldContent>
+                            <Input id="dateOfBirth" name="dateOfBirth" type="date" value={form.dateOfBirth} onChange={handleChange} required className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500" />
+                            <FieldDescription className="text-slate-400">User's date of birth</FieldDescription>
+                        </FieldContent>
+                    </Field>
+                    <Field>
+                        <FieldLabel htmlFor="role" className="text-slate-300">Role *</FieldLabel>
                         <FieldContent>
                             <Select value={form.role} onValueChange={(v: string) => handleSelectChange("role", v)}>
                                 <SelectTrigger id="role" name="role" className="bg-slate-700 border-slate-600 text-white">
@@ -167,19 +211,7 @@ export default function CreateUserForm({ onUserCreated }: { onUserCreated?: () =
                         </FieldContent>
                     </Field>
                     <Field>
-                        <div className="flex items-center gap-2 mt-2">
-                            <Checkbox id="consent" className="h-4 w-4" name="consent" checked={form.consent} onCheckedChange={(v: CheckedState) => handleCheckboxChange("consent", v)} />
-                            <Label htmlFor="consent">Consent</Label>
-                        </div>
-                    </Field>
-                    <Field>
-                        <div className="flex items-center gap-2 mt-2">
-                            <Checkbox id="privacyNoticeAccepted" className="h-4 w-4" name="privacyNoticeAccepted" checked={form.privacyNoticeAccepted} onCheckedChange={(v: CheckedState) => handleCheckboxChange("privacyNoticeAccepted", v)} />
-                            <Label htmlFor="privacyNoticeAccepted">Privacy Notice Accepted</Label>
-                        </div>
-                    </Field>
-                    <Field>
-                        <FieldLabel htmlFor="joiningDate" className="text-slate-300">Joining Date</FieldLabel>
+                        <FieldLabel htmlFor="joiningDate" className="text-slate-300">Joining Date *</FieldLabel>
                         <FieldContent>
                             <Input id="joiningDate" name="joiningDate" type="date" value={form.joiningDate} onChange={handleChange} required className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500" />
                             <FieldDescription className="text-slate-400">Date the user joined</FieldDescription>
@@ -214,7 +246,7 @@ export default function CreateUserForm({ onUserCreated }: { onUserCreated?: () =
                         </FieldContent>
                     </Field>
                     <Field>
-                        <FieldLabel htmlFor="subscriptionType" className="text-slate-300">Subscription Type</FieldLabel>
+                        <FieldLabel htmlFor="subscriptionType" className="text-slate-300">Subscription Type *</FieldLabel>
                         <FieldContent>
                             <Select value={form.subscriptionType} onValueChange={(v: string) => handleSelectChange("subscriptionType", v)}>
                                 <SelectTrigger id="subscriptionType" name="subscriptionType" className="bg-slate-700 border-slate-600 text-white">
@@ -230,41 +262,33 @@ export default function CreateUserForm({ onUserCreated }: { onUserCreated?: () =
                         </FieldContent>
                     </Field>
                     <Field>
-                        <div className="flex items-center gap-2 mt-2">
-                            <Checkbox id="isHiwoxMember" className="h-4 w-4" name="isHiwoxMember" checked={form.isHiwoxMember} onCheckedChange={(v: CheckedState) => handleCheckboxChange("isHiwoxMember", v)} />
-                            <Label htmlFor="isHiwoxMember">Is Hiwox Member</Label>
-                        </div>
-                    </Field>
-                    <Field>
-                        <FieldLabel htmlFor="subscriptionRenewalDate" className="text-slate-300">Subscription Renewal Date</FieldLabel>
+                        <FieldLabel htmlFor="subscriptionRenewalDate" className="text-slate-300">Subscription Renewal Due Date *</FieldLabel>
                         <FieldContent>
-                            <Input id="subscriptionRenewalDate" name="subscriptionRenewalDate" type="date" value={form.subscriptionRenewalDate} onChange={handleChange} className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500" />
+                            <Input id="subscriptionRenewalDate" name="subscriptionRenewalDate" type="date" value={form.subscriptionRenewalDate} onChange={handleChange} required className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500" />
                             <FieldDescription className="text-slate-400">Next renewal date</FieldDescription>
                         </FieldContent>
                     </Field>
                     <Field>
-                        <FieldLabel htmlFor="gender" className="text-slate-300">Gender</FieldLabel>
-                        <FieldContent>
-                            <Select value={form.gender} onValueChange={(v: string) => handleSelectChange("gender", v)}>
-                                <SelectTrigger id="gender" name="gender" className="bg-slate-700 border-slate-600 text-white">
-                                    <SelectValue placeholder="Select gender" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="male">Male</SelectItem>
-                                    <SelectItem value="female">Female</SelectItem>
-                                    <SelectItem value="other">Other</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <FieldDescription className="text-slate-400">User's gender</FieldDescription>
-                        </FieldContent>
+                        <div className="flex items-center gap-2 mt-10">
+                            <Checkbox id="consent" className="h-4 w-4" name="consent" checked={form.consent} onCheckedChange={(v: CheckedState) => handleCheckboxChange("consent", v)} />
+                            <Label htmlFor="consent">Consent</Label>
+                        </div>
                     </Field>
                     <Field>
-                        <FieldLabel htmlFor="dateOfBirth" className="text-slate-300">Date of Birth</FieldLabel>
-                        <FieldContent>
-                            <Input id="dateOfBirth" name="dateOfBirth" type="date" value={form.dateOfBirth} onChange={handleChange} required className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500" />
-                            <FieldDescription className="text-slate-400">User's date of birth</FieldDescription>
-                        </FieldContent>
+                        <div className="flex items-center gap-2 mt-2">
+                            <Checkbox id="isHiwoxMember" className="h-4 w-4" name="isHiwoxMember" checked={form.isHiwoxMember} onCheckedChange={(v: CheckedState) => handleCheckboxChange("isHiwoxMember", v)} />
+                            <Label htmlFor="isHiwoxMember">Is Hiwox Member?</Label>
+                        </div>
                     </Field>
+
+
+                    <Field>
+                        <div className="flex items-center gap-2 mt-2">
+                            <Checkbox id="privacyNoticeAccepted" className="h-4 w-4" name="privacyNoticeAccepted" checked={form.privacyNoticeAccepted} onCheckedChange={(v: CheckedState) => handleCheckboxChange("privacyNoticeAccepted", v)} />
+                            <Label htmlFor="privacyNoticeAccepted">Privacy Notice Accepted</Label>
+                        </div>
+                    </Field>
+
                 </div>
                 <Field>
                     <FieldLabel className="my-2">Address</FieldLabel>
@@ -276,7 +300,6 @@ export default function CreateUserForm({ onUserCreated }: { onUserCreated?: () =
                                 placeholder="Street"
                                 value={form.address.street}
                                 onChange={handleChange}
-                                required
                                 className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500"
                             />
                             <Input
@@ -285,7 +308,6 @@ export default function CreateUserForm({ onUserCreated }: { onUserCreated?: () =
                                 placeholder="City"
                                 value={form.address.city}
                                 onChange={handleChange}
-                                required
                                 className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500"
                             />
                             <Input
@@ -294,7 +316,6 @@ export default function CreateUserForm({ onUserCreated }: { onUserCreated?: () =
                                 placeholder="State"
                                 value={form.address.state}
                                 onChange={handleChange}
-                                required
                                 className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500"
                             />
                             <Input
@@ -303,7 +324,6 @@ export default function CreateUserForm({ onUserCreated }: { onUserCreated?: () =
                                 placeholder="Pincode"
                                 value={form.address.pincode}
                                 onChange={handleChange}
-                                required
                                 className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500"
                             />
                         </div>
