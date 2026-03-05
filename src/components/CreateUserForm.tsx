@@ -82,6 +82,7 @@ export default function CreateUserForm({ onUserCreated }: { onUserCreated?: () =
             setForm((prev) => ({
                 ...prev,
                 [name]: value,
+                ...(name === "leavingDate" && !value ? { reasonOfLeaving: "" } : {}),
             }));
         }
     };
@@ -113,7 +114,7 @@ export default function CreateUserForm({ onUserCreated }: { onUserCreated?: () =
                 leavingDate: form.leavingDate ? new Date(form.leavingDate).toISOString() : undefined,
                 subscriptionRenewalDate: form.subscriptionRenewalDate ? new Date(form.subscriptionRenewalDate).toISOString() : undefined,
                 dateOfBirth: form.dateOfBirth ? new Date(form.dateOfBirth).toISOString() : undefined,
-                reasonOfLeaving: form.reasonOfLeaving || undefined,
+                reasonOfLeaving: form.leavingDate && form.reasonOfLeaving ? form.reasonOfLeaving : undefined,
                 address: {
                     street: form.address.street,
                     city: form.address.city,
@@ -227,7 +228,11 @@ export default function CreateUserForm({ onUserCreated }: { onUserCreated?: () =
                     <Field>
                         <FieldLabel htmlFor="reasonOfLeaving" className="text-slate-300">Reason of Leaving</FieldLabel>
                         <FieldContent>
-                            <Select value={form.reasonOfLeaving} onValueChange={(v: string) => handleSelectChange("reasonOfLeaving", v)}>
+                            <Select
+                                value={form.reasonOfLeaving}
+                                onValueChange={(v: string) => handleSelectChange("reasonOfLeaving", v)}
+                                disabled={!form.leavingDate}
+                            >
                                 <SelectTrigger id="reasonOfLeaving" name="reasonOfLeaving" className="bg-slate-700 border-slate-600 text-white">
                                     <SelectValue placeholder="Select reason" />
                                 </SelectTrigger>
@@ -254,8 +259,8 @@ export default function CreateUserForm({ onUserCreated }: { onUserCreated?: () =
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="basic">Basic</SelectItem>
+                                    <SelectItem value="super">Super</SelectItem>
                                     <SelectItem value="premium">Premium</SelectItem>
-                                    <SelectItem value="vip">VIP</SelectItem>
                                 </SelectContent>
                             </Select>
                             <FieldDescription className="text-slate-400">User's subscription type</FieldDescription>

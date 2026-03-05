@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import api from "@/axios/axios-config";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ type UploadUserPayload = {
     age?: number;
     phone: string;
     email: string;
-    password: string;
+    password?: string;
     role: string;
     consent: boolean;
     privacyNoticeAccepted: boolean;
@@ -158,7 +158,6 @@ const parseRowToPayload = (row: Record<string, unknown>, rowNumber: number) => {
         age: undefined,
         phone: String(getCellValue(row, ["phone", "phoneNumber"]) ?? "").trim(),
         email: String(getCellValue(row, ["email"]) ?? "").trim(),
-        password: String(getCellValue(row, ["password"]) ?? "").trim(),
         role: String(getCellValue(row, ["role"]) ?? "user").trim() || "user",
         consent: parseBoolean(getCellValue(row, ["consent"]), false),
         privacyNoticeAccepted: parseBoolean(
@@ -170,7 +169,7 @@ const parseRowToPayload = (row: Record<string, unknown>, rowNumber: number) => {
         reasonOfLeaving: String(getCellValue(row, ["reasonOfLeaving"]) ?? "").trim() || undefined,
         subscriptionType:
             String(getCellValue(row, ["subscriptionType"]) ?? "basic").trim() || "basic",
-        isHiwoxMember: parseBoolean(getCellValue(row, ["isHiwoxMember"]), false),
+        isHiwoxMember: false,
         subscriptionRenewalDate: parseDateToIso(
             getCellValue(row, ["subscriptionRenewalDate"])
         ),
@@ -195,7 +194,6 @@ const parseRowToPayload = (row: Record<string, unknown>, rowNumber: number) => {
     if (payload.age === undefined) errors.push("Invalid or missing age");
     if (!payload.phone) errors.push("Missing phone");
     if (!payload.email) errors.push("Missing email");
-    if (!payload.password) errors.push("Missing password");
     if (!payload.joiningDate) errors.push("Invalid or missing joiningDate");
     if (!payload.dateOfBirth) errors.push("Invalid or missing dateOfBirth");
     if (!payload.address.street) errors.push("Missing address.street");
@@ -207,9 +205,11 @@ const parseRowToPayload = (row: Record<string, unknown>, rowNumber: number) => {
 };
 
 export default function UserExcelUpload() {
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [fileName, setFileName] = useState("");
     const [parsedUsers, setParsedUsers] = useState<ParsedUser[]>([]);
     const [rowErrors, setRowErrors] = useState<RowError[]>([]);
+    const [hiwoxSelections, setHiwoxSelections] = useState<Record<number, boolean>>({});
     const [parsing, setParsing] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [isConfirmed, setIsConfirmed] = useState(false);
@@ -218,11 +218,17 @@ export default function UserExcelUpload() {
     const invalidCount = rowErrors.length;
 
     const previewRows = useMemo(() => parsedUsers, [parsedUsers]);
+    const formatPreviewValue = (value: string | number | boolean | undefined) => {
+        if (value === undefined) return "N/A";
+        if (typeof value === "boolean") return value ? "Yes" : "No";
+        return String(value);
+    };
 
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         setParsedUsers([]);
         setRowErrors([]);
+        setHiwoxSelections({});
         setIsConfirmed(false);
 
         if (!file) {
@@ -250,6 +256,7 @@ export default function UserExcelUpload() {
 
             const nextUsers: ParsedUser[] = [];
             const nextErrors: RowError[] = [];
+            const nextHiwoxSelections: Record<number, boolean> = {};
 
             rawRows.forEach((row, index) => {
                 const rowNumber = index + 2;
@@ -257,12 +264,15 @@ export default function UserExcelUpload() {
                 if (errors.length > 0) {
                     nextErrors.push({ row: rowNumber, errors });
                 } else {
+                    payload.isHiwoxMember = false;
                     nextUsers.push(payload);
+                    nextHiwoxSelections[rowNumber] = false;
                 }
             });
 
             setParsedUsers(nextUsers);
             setRowErrors(nextErrors);
+            setHiwoxSelections(nextHiwoxSelections);
 
             if (nextUsers.length > 0) {
                 showSuccessToast(`Parsed ${nextUsers.length} valid user row(s)`);
@@ -281,6 +291,13 @@ export default function UserExcelUpload() {
         setIsConfirmed(checked === true);
     };
 
+    const handleHiwoxSelectionChange = (rowNumber: number, checked: CheckedState) => {
+        setHiwoxSelections((prev) => ({
+            ...prev,
+            [rowNumber]: checked === true,
+        }));
+    };
+
     const handleSubmit = async () => {
         if (!isConfirmed) {
             showErrorToast("Please confirm the parsed data before submitting");
@@ -296,7 +313,10 @@ export default function UserExcelUpload() {
         try {
             const results = await Promise.allSettled(
                 parsedUsers.map((user) => {
-                    const { __row, ...userData } = user; // Exclude __row from payload
+                    const userData = Object.fromEntries(
+                        Object.entries(user).filter(([key]) => key !== "__row")
+                    );
+                    userData.isHiwoxMember = hiwoxSelections[user.__row] ?? false;
                     return api.post("/auth/register", userData);
                 })
             );
@@ -330,19 +350,28 @@ export default function UserExcelUpload() {
                     Upload CSV exported from Excel with headers matching Create User fields.
                 </p>
                 <Input
+                    ref={fileInputRef}
                     type="file"
                     accept=".csv"
                     onChange={handleFileUpload}
                     disabled={parsing || submitting}
-                    className="max-w-lg bg-slate-900 border-slate-600 text-white file:text-slate-200"
+                    className="hidden"
                 />
+                <Button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={parsing || submitting}
+                    className="bg-slate-700 text-white hover:bg-slate-600"
+                >
+                    {parsing ? "Parsing..." : "Choose CSV File"}
+                </Button>
                 {fileName ? (
                     <p className="mt-3 text-sm text-slate-300">
                         File: <span className="font-medium">{fileName}</span>
                     </p>
                 ) : null}
                 <p className="mt-4 text-xs text-slate-400">
-                    Required headers: `name`, `age`, `phone`, `email`, `password`, `joiningDate`,
+                    Required headers: `name`, `age`, `phone`, `email`, `joiningDate`,
                     `dateOfBirth`, `address.street`, `address.city`, `address.state`, `address.pincode`
                 </p>
             </div>
@@ -363,32 +392,84 @@ export default function UserExcelUpload() {
                             <h3 className="mb-3 text-lg font-semibold text-white">
                                 Parsed Data Preview
                             </h3>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow className="border-slate-700">
-                                        <TableHead className="text-slate-300">Row</TableHead>
-                                        <TableHead className="text-slate-300">Name</TableHead>
-                                        <TableHead className="text-slate-300">Email</TableHead>
-                                        <TableHead className="text-slate-300">Phone</TableHead>
-                                        <TableHead className="text-slate-300">Age</TableHead>
-                                        <TableHead className="text-slate-300">Role</TableHead>
-                                        <TableHead className="text-slate-300">Subscription</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {previewRows.map((user) => (
-                                        <TableRow key={user.__row} className="border-slate-700">
-                                            <TableCell className="text-slate-200">{user.__row}</TableCell>
-                                            <TableCell className="text-slate-200">{user.name}</TableCell>
-                                            <TableCell className="text-slate-200">{user.email}</TableCell>
-                                            <TableCell className="text-slate-200">{user.phone}</TableCell>
-                                            <TableCell className="text-slate-200">{user.age}</TableCell>
-                                            <TableCell className="text-slate-200">{user.role}</TableCell>
-                                            <TableCell className="text-slate-200">{user.subscriptionType}</TableCell>
+                            <div className="overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow className="border-slate-700">
+                                            <TableHead className="text-slate-300">Row</TableHead>
+                                            <TableHead className="text-slate-300">Name</TableHead>
+                                            <TableHead className="text-slate-300">Age</TableHead>
+                                            <TableHead className="text-slate-300">Phone</TableHead>
+                                            <TableHead className="text-slate-300">Email</TableHead>
+                                            <TableHead className="text-slate-300">Role</TableHead>
+                                            <TableHead className="text-slate-300">Consent</TableHead>
+                                            <TableHead className="text-slate-300">Privacy Notice</TableHead>
+                                            <TableHead className="text-slate-300">Joining Date</TableHead>
+                                            <TableHead className="text-slate-300">Leaving Date</TableHead>
+                                            <TableHead className="text-slate-300">Reason of Leaving</TableHead>
+                                            <TableHead className="text-slate-300">Subscription Type</TableHead>
+                                            <TableHead className="text-slate-300">Hiwox Member</TableHead>
+                                            <TableHead className="text-slate-300">Renewal Date</TableHead>
+                                            <TableHead className="text-slate-300">Gender</TableHead>
+                                            <TableHead className="text-slate-300">Date of Birth</TableHead>
+                                            <TableHead className="text-slate-300">Street</TableHead>
+                                            <TableHead className="text-slate-300">City</TableHead>
+                                            <TableHead className="text-slate-300">State</TableHead>
+                                            <TableHead className="text-slate-300">Pincode</TableHead>
                                         </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {previewRows.map((user) => (
+                                            <TableRow key={user.__row} className="border-slate-700">
+                                                <TableCell className="text-slate-200">{user.__row}</TableCell>
+                                                <TableCell className="text-slate-200">{formatPreviewValue(user.name)}</TableCell>
+                                                <TableCell className="text-slate-200">{formatPreviewValue(user.age)}</TableCell>
+                                                <TableCell className="text-slate-200">{formatPreviewValue(user.phone)}</TableCell>
+                                                <TableCell className="text-slate-200">{formatPreviewValue(user.email)}</TableCell>
+                                                <TableCell className="text-slate-200">{formatPreviewValue(user.role)}</TableCell>
+                                                <TableCell className="text-slate-200">{formatPreviewValue(user.consent)}</TableCell>
+                                                <TableCell className="text-slate-200">
+                                                    {formatPreviewValue(user.privacyNoticeAccepted)}
+                                                </TableCell>
+                                                <TableCell className="text-slate-200">{formatPreviewValue(user.joiningDate)}</TableCell>
+                                                <TableCell className="text-slate-200">{formatPreviewValue(user.leavingDate)}</TableCell>
+                                                <TableCell className="text-slate-200">
+                                                    {formatPreviewValue(user.reasonOfLeaving)}
+                                                </TableCell>
+                                                <TableCell className="text-slate-200">
+                                                    {formatPreviewValue(user.subscriptionType)}
+                                                </TableCell>
+                                                <TableCell className="text-slate-200">
+                                                    <Checkbox
+                                                        checked={hiwoxSelections[user.__row] ?? false}
+                                                        onCheckedChange={(checked) =>
+                                                            handleHiwoxSelectionChange(user.__row, checked)
+                                                        }
+                                                        disabled={submitting || parsing}
+                                                    />
+                                                </TableCell>
+                                                <TableCell className="text-slate-200">
+                                                    {formatPreviewValue(user.subscriptionRenewalDate)}
+                                                </TableCell>
+                                                <TableCell className="text-slate-200">{formatPreviewValue(user.gender)}</TableCell>
+                                                <TableCell className="text-slate-200">{formatPreviewValue(user.dateOfBirth)}</TableCell>
+                                                <TableCell className="text-slate-200">
+                                                    {formatPreviewValue(user.address.street)}
+                                                </TableCell>
+                                                <TableCell className="text-slate-200">
+                                                    {formatPreviewValue(user.address.city)}
+                                                </TableCell>
+                                                <TableCell className="text-slate-200">
+                                                    {formatPreviewValue(user.address.state)}
+                                                </TableCell>
+                                                <TableCell className="text-slate-200">
+                                                    {formatPreviewValue(user.address.pincode)}
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
                         </>
                     )}
 

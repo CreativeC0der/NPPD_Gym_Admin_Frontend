@@ -15,6 +15,7 @@ import { showSuccessToast, showErrorToast } from '@/utils/toast';
 import type User from "../types/User";
 import Pagination from '@/components/Pagination';
 import UserDetailDialog from '@/components/UserDetailDialog';
+import EditUserDialog, { type EditableUserFields } from '@/components/EditUserDialog';
 
 interface ApiResponse {
     success: boolean;
@@ -38,6 +39,9 @@ const ViewAllUsers: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
+    const [editDialogOpen, setEditDialogOpen] = useState(false);
+    const [editUser, setEditUser] = useState<User | null>(null);
+    const [updatingUser, setUpdatingUser] = useState(false);
     const PAGE_LIMIT = 5;
 
     useEffect(() => {
@@ -116,11 +120,49 @@ const ViewAllUsers: React.FC = () => {
     };
 
 
+    const toISOStringOrUndefined = (value: string) => {
+        if (!value) return undefined;
+        const parsed = new Date(value);
+        if (Number.isNaN(parsed.getTime())) return undefined;
+        return parsed.toISOString();
+    };
+
+    const handleEditUserSave = async (userId: string, values: EditableUserFields) => {
+        try {
+            setUpdatingUser(true);
+            const payload = {
+                phone: values.phone,
+                subscriptionType: values.subscriptionType,
+                isHiwoxMember: values.isHiwoxMember,
+                subscriptionRenewalDate: toISOStringOrUndefined(values.subscriptionRenewalDate),
+                leavingDate: toISOStringOrUndefined(values.leavingDate),
+                reasonOfLeaving: values.reasonOfLeaving || undefined,
+                address: values.address,
+            };
+            await axios.patch(`/auth/users/${userId}`, payload);
+            showSuccessToast('User updated successfully');
+            setEditDialogOpen(false);
+            setEditUser(null);
+            await fetchUsers(page, searchQuery);
+        } catch (error) {
+            console.error('Error updating user:', error);
+            showErrorToast('Failed to update user');
+        } finally {
+            setUpdatingUser(false);
+        }
+    };
+
     const handleUserAction = (action: string, userId: string) => {
         if (action === 'View') {
             const user = users.find(u => u._id === userId);
             setSelectedUser(user || null);
             setDialogOpen(true);
+            return;
+        }
+        if (action === 'Edit') {
+            const user = users.find(u => u._id === userId);
+            setEditUser(user || null);
+            setEditDialogOpen(true);
             return;
         }
         console.log(`${action} user:`, userId);
@@ -136,6 +178,13 @@ const ViewAllUsers: React.FC = () => {
                 user={selectedUser}
                 getInitials={getInitials}
                 getStatusBadge={getStatusBadge}
+            />
+            <EditUserDialog
+                open={editDialogOpen}
+                onOpenChange={setEditDialogOpen}
+                user={editUser}
+                onSave={handleEditUserSave}
+                loading={updatingUser}
             />
             {/* Header */}
             <div className="mb-8 flex justify-between items-start">

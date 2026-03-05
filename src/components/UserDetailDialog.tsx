@@ -26,9 +26,13 @@ const UserDetailDialog: React.FC<UserDetailDialogProps> = ({
     user,
     getInitials,
     getStatusBadge,
-}) => (
+}) => {
+    const formatDate = (value?: string) => (value ? new Date(value).toLocaleDateString() : '-');
+    const formatBoolean = (value?: boolean) => (value === undefined ? '-' : value ? 'Yes' : 'No');
+
+    return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-xl">
+        <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
                 <DialogTitle>User Details</DialogTitle>
                 <DialogDescription>
@@ -83,6 +87,27 @@ const UserDetailDialog: React.FC<UserDetailDialogProps> = ({
                         <div>
                             <span className="font-semibold">Status:</span> {user?.status ?? '-'}
                         </div>
+                        <div>
+                            <span className="font-semibold">Hiwox Member:</span> {formatBoolean(user?.profile?.isHiwoxMember)}
+                        </div>
+                        <div>
+                            <span className="font-semibold">Address:</span>{' '}
+                            {user?.profile?.address
+                                ? [
+                                    user.profile.address.street,
+                                    user.profile.address.city,
+                                    user.profile.address.state,
+                                    user.profile.address.pincode,
+                                ].filter(Boolean).join(', ') || '-'
+                                : '-'}
+                        </div>
+                        <div>
+                            <span className="font-semibold">Leaving Date:</span> {user?.profile?.leavingDate ? formatDate(user.profile.leavingDate) : '-'}
+                        </div>
+                        <div>
+                            <span className="font-semibold">Subscription Renewal Date:</span>{' '}
+                            {user?.profile?.subscriptionRenewalDate ? formatDate(user.profile.subscriptionRenewalDate) : '-'}
+                        </div>
                     </div>
                     <DialogClose asChild>
                         <Button className="mt-4 w-full" variant="secondary">Close</Button>
@@ -93,6 +118,7 @@ const UserDetailDialog: React.FC<UserDetailDialogProps> = ({
             )}
         </DialogContent>
     </Dialog>
-);
+    );
+};
 
 export default UserDetailDialog;
