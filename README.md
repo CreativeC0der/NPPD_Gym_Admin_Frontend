@@ -1,112 +1,127 @@
 # NPPD Gym Admin Frontend
 
-Frontend application for NPPD Gym Admin built with React, TypeScript, Redux Toolkit, and Tailwind CSS.
+React + TypeScript admin panel for managing gyms, users, consultants, and dashboard insights in the NPPD ecosystem.
 
-![Application Screenshot](https://github.com/user-attachments/assets/9bf8814d-3c6b-4d57-9e9f-17b7d81e08fb)
+## Overview
 
-## 🚀 Tech Stack
+This app provides role-protected admin workflows for:
 
-- **React 19** - Modern React with latest features
-- **TypeScript** - Type-safe development
-- **Redux Toolkit** - State management with simplified Redux
-- **Tailwind CSS** - Utility-first CSS framework
-- **Vite** - Next-generation frontend tooling
-- **ESLint** - Code linting and quality checks
+- Admin authentication and session restoration
+- Dashboard KPIs with charts
+- Gym creation and gym listing
+- User listing, inspection, and editing
+- Consultant listing
+- Bulk user import via CSV upload
+- Revenue intelligence view
 
-## 📋 Features
+## Tech Stack
 
-- ✅ React 19 with TypeScript
-- ✅ Redux Toolkit for state management
-- ✅ Tailwind CSS for styling
-- ✅ Hot Module Replacement (HMR)
-- ✅ ESLint configuration
-- ✅ Type-safe Redux hooks
-- ✅ Modern build system with Vite
+- React 19
+- TypeScript 5
+- Vite 7
+- Redux Toolkit + React Redux
+- React Router
+- Tailwind CSS 4
+- shadcn/ui + Radix UI primitives
+- Axios
+- React Hook Form + Zod
+- Recharts
+- Sonner + SweetAlert2 (toasts/dialogs)
 
-## 🛠️ Getting Started
+## Prerequisites
 
-### Prerequisites
+- Node.js 18+
+- npm 9+
 
-- Node.js 18+ and npm
+## Getting Started
 
-### Installation
-
-1. Clone the repository:
 ```bash
-git clone https://github.com/CreativeC0der/NPPD_Gym_Admin_Frontend.git
+git clone <your-repo-url>
 cd NPPD_Gym_Admin_Frontend
-```
-
-2. Install dependencies:
-```bash
 npm install
 ```
 
-3. Start the development server:
+Create `.env` in the project root:
+
+```env
+VITE_BACKEND_HOST=http://localhost:10000
+```
+
+Run the app:
+
 ```bash
 npm run dev
 ```
 
-4. Open your browser and navigate to `http://localhost:5173`
+The Vite dev server runs at `http://localhost:5173` by default.
 
-## 📜 Available Scripts
+## Scripts
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run lint` - Run ESLint
-- `npm run preview` - Preview production build
+- `npm run dev` - start local dev server
+- `npm run build` - type-check and build production bundle
+- `npm run preview` - preview production build locally
+- `npm run lint` - run ESLint
 
-## 📁 Project Structure
+## API Configuration
 
-```
+Axios is configured in `src/axios/axios-config.ts`:
+
+- Base URL: `${VITE_BACKEND_HOST}/api`
+- Falls back to `http://localhost:10000/api` if env var is missing
+- Automatically attaches `Authorization: Bearer <token>` from `localStorage`
+
+## Auth and Access Control
+
+- Login page is available at `/`
+- Protected routes validate token and restore user from `/auth/me`
+- Allowed roles for dashboard routes: `superadmin`, `admin`
+- Token is stored in `localStorage` key: `token`
+
+## Route Map
+
+- `/` - Login
+- `/dashboard` - KPI dashboard
+- `/gyms/create` - Create gym
+- `/gyms/all` - View all gyms
+- `/users/all` - View all users
+- `/consultants/all` - View all consultants
+- `/revenue` - Revenue intelligence
+- `/user/create` - Create user
+- `/users/upload` - CSV bulk user upload
+
+## CSV Upload
+
+Bulk upload UI is at `/users/upload`.
+
+- Current parser supports CSV input (Excel-exported CSV works)
+- Example file is available at `demo-users-upload.csv`
+- Includes per-row validation and error reporting before submit
+
+## Project Structure
+
+```text
 src/
-├── store/
-│   ├── slices/          # Redux slices
-│   │   └── counterSlice.ts
-│   ├── store.ts         # Redux store configuration
-│   └── hooks.ts         # Typed Redux hooks
-├── App.tsx              # Main application component
-├── main.tsx             # Application entry point
-└── index.css            # Global styles with Tailwind
+├── axios/                # Axios instance and interceptors
+├── components/           # Reusable UI + feature components
+├── hooks/                # Typed redux hooks and utility hooks
+├── lib/                  # Shared utilities and sidebar data
+├── pages/                # Route-level pages
+├── routes/               # Router configuration
+├── store/                # Redux store and slices
+├── types/                # Shared TypeScript types
+└── utils/                # Toasts and helper utilities
 ```
 
-## 🔧 Redux Setup
+## Deployment
 
-The project includes a complete Redux Toolkit setup with:
+- `vercel.json` is configured to rewrite all routes to `index.html`
+- This enables client-side routing on refresh/direct URL access
 
-- **Store Configuration** (`src/store/store.ts`)
-- **Typed Hooks** (`src/store/hooks.ts`) - Use `useAppDispatch` and `useAppSelector`
-- **Example Slice** (`src/store/slices/counterSlice.ts`) - Counter example demonstrating Redux Toolkit
+## Notes
 
-### Adding New Slices
+- Revenue page currently uses static sample data for member table/trend visualization.
+- Gym list augments API response with temporary mock stats for dashboard-style cards.
 
-1. Create a new slice in `src/store/slices/`
-2. Import and add it to the store in `src/store/store.ts`
-3. Use the typed hooks (`useAppDispatch`, `useAppSelector`) in your components
+## License
 
-## 🎨 Tailwind CSS
-
-Tailwind CSS is configured and ready to use. The configuration file is `tailwind.config.js`.
-
-### Customizing Tailwind
-
-Edit `tailwind.config.js` to customize your design system:
-
-```js
-export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
-  theme: {
-    extend: {
-      // Add your customizations here
-    },
-  },
-  plugins: [],
-}
-```
-
-## 📝 License
-
-See the [LICENSE](LICENSE) file for details.
+This project is licensed under the terms in [LICENSE](LICENSE).
