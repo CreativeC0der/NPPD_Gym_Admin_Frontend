@@ -22,7 +22,7 @@ export const getSidebarData = (user: User) => {
         navMain: (user.role === 'coordinator') ? [
             {
                 title: "Record Initial Wellness Data",
-                status: "/coordinator/wellness-record",
+                url: "/coordinator/wellness-record",
                 icon: CheckCircle2,
             }
         ] : [
@@ -124,7 +124,7 @@ export const getSidebarData = (user: User) => {
                     icon: Settings,
                     badge: "2",
                 }] : [],
-        ],
+        ]
     }
 
     return data;
