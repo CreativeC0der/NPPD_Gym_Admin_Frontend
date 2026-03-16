@@ -43,6 +43,10 @@ const Login: React.FC = () => {
 
             // Navigate to dashboard on successful login
             navigate('/dashboard');
+
+            if (role == 'coordinator') {
+                navigate('/coordinator/wellness-record');
+            }
         } catch (err: any) {
             console.error('Login error:', err);
 

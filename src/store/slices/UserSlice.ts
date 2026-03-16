@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
-export type UserRole = 'user' | 'consultant' | 'admin' | 'superadmin';
+export type UserRole = 'user' | 'consultant' | 'admin' | 'superadmin' | 'coordinator';
 
 export interface User {
     userId: string;

@@ -12,6 +12,7 @@ import {
     DialogTrigger
 } from '../components/ui/dialog';
 import CreateAdminForm from '../components/CreateAdminForm';
+import CreateCoordinatorForm from '../components/CreateCoordinatorForm';
 import DashboardMetrics, { type DashboardMetricsData } from '../components/DashboardMetrics';
 import { UserRevenueChart } from '../components/UserRevenueChart';
 import { TopPerformingGyms } from '../components/TopPerformingGyms';
@@ -23,6 +24,7 @@ const Dashboard: React.FC = () => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isCoordinatorDialogOpen, setIsCoordinatorDialogOpen] = useState(false);
     const [metrics, setMetrics] = useState<DashboardMetricsData | null>(null);
     const [loading, setLoading] = useState(true);
     const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
@@ -115,30 +117,56 @@ const Dashboard: React.FC = () => {
                         </div>
                         <div className="flex items-center space-x-3">
                             {user.role === 'superadmin' && (
-                                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                                    <DialogTrigger asChild>
-                                        <button
-                                            className="px-4 py-2 rounded-lg transition-colors text-white font-medium"
-                                            style={{ backgroundColor: 'var(--accent-green)' }}
-                                            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.85'}
-                                            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-                                        >
-                                            + Create Admin
-                                        </button>
-                                    </DialogTrigger>
-                                    <DialogContent className="sm:max-w-[500px] bg-slate-800 border-slate-700">
-                                        <DialogHeader>
-                                            <DialogTitle className="text-white">Create Admin User</DialogTitle>
-                                            <DialogDescription className="text-slate-400">
-                                                Fill in the details below to create a new admin user. All fields are required.
-                                            </DialogDescription>
-                                        </DialogHeader>
-                                        <CreateAdminForm
-                                            onClose={() => setIsDialogOpen(false)}
-                                            onSuccess={() => setIsDialogOpen(false)}
-                                        />
-                                    </DialogContent>
-                                </Dialog>)}
+                                <>
+                                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                                        <DialogTrigger asChild>
+                                            <button
+                                                className="px-4 py-2 rounded-lg transition-colors text-white font-medium"
+                                                style={{ backgroundColor: 'var(--accent-green)' }}
+                                                onMouseEnter={(e) => e.currentTarget.style.opacity = '0.85'}
+                                                onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                                            >
+                                                + Create Admin
+                                            </button>
+                                        </DialogTrigger>
+                                        <DialogContent className="sm:max-w-[500px] bg-slate-800 border-slate-700">
+                                            <DialogHeader>
+                                                <DialogTitle className="text-white">Create Admin User</DialogTitle>
+                                                <DialogDescription className="text-slate-400">
+                                                    Fill in the details below to create a new admin user. All fields are required.
+                                                </DialogDescription>
+                                            </DialogHeader>
+                                            <CreateAdminForm
+                                                onClose={() => setIsDialogOpen(false)}
+                                                onSuccess={() => setIsDialogOpen(false)}
+                                            />
+                                        </DialogContent>
+                                    </Dialog>
+                                    <Dialog open={isCoordinatorDialogOpen} onOpenChange={setIsCoordinatorDialogOpen}>
+                                        <DialogTrigger asChild>
+                                            <button
+                                                className="px-4 py-2 rounded-lg transition-colors text-white font-medium"
+                                                style={{ backgroundColor: 'var(--accent-blue)' }}
+                                                onMouseEnter={(e) => e.currentTarget.style.opacity = '0.85'}
+                                                onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                                            >
+                                                + Create Coordinator
+                                            </button>
+                                        </DialogTrigger>
+                                        <DialogContent className="sm:max-w-[500px] bg-slate-800 border-slate-700">
+                                            <DialogHeader>
+                                                <DialogTitle className="text-white">Create Coordinator User</DialogTitle>
+                                                <DialogDescription className="text-slate-400">
+                                                    Fill in the details below to create a new coordinator user. All fields are required.
+                                                </DialogDescription>
+                                            </DialogHeader>
+                                            <CreateCoordinatorForm
+                                                onClose={() => setIsCoordinatorDialogOpen(false)}
+                                                onSuccess={() => setIsCoordinatorDialogOpen(false)}
+                                            />
+                                        </DialogContent>
+                                    </Dialog>
+                                </>)}
 
                             <button
                                 onClick={handleRefresh}

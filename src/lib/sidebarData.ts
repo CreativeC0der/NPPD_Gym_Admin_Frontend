@@ -9,7 +9,8 @@ import {
     BarChart4,
     Brain,
     FileText,
-    Settings
+    Settings,
+    CheckCircle2,
 } from "lucide-react"
 import type { User } from "@/store/slices/UserSlice";
 
@@ -18,7 +19,13 @@ export const getSidebarData = (user: User) => {
     const data = {
         systemStatus: [],
         // { title: "API", status: "45ms", icon: CheckCircle2, isHealthy: true }
-        navMain: [
+        navMain: (user.role === 'coordinator') ? [
+            {
+                title: "Record Initial Wellness Data",
+                status: "/coordinator/wellness-record",
+                icon: CheckCircle2,
+            }
+        ] : [
             {
                 title: "Platform Overview",
                 url: "/dashboard",

@@ -10,6 +10,7 @@ import ViewAllConsultants from '../pages/ViewAllConsultants';
 import Revenue from '../pages/Revenue';
 import CreateUser from '../pages/CreateUser';
 import UserExcelUploadPage from '../pages/UserExcelUploadPage';
+import WellnessRecord from '../pages/WellnessRecord';
 
 export const router = createBrowserRouter([
     {
@@ -128,5 +129,19 @@ export const router = createBrowserRouter([
             },
         ],
     },
+    {
+        path: '/coordinator/wellness-record',
+        element: <Layout />,
+        children: [
+            {
+                index: true,
+                element: (
+                    <Protected requiredRole={['coordinator']}>
+                        <WellnessRecord />
+                    </Protected>
+                ),
+            },
+        ],
+    }
     // Add more routes here as needed
 ]);
