@@ -83,13 +83,14 @@ const WellnessRecordForm: React.FC<WellnessRecordFormProps> = ({ userId }) => {
     const [loading, setLoading] = useState(true);
     const [expanded, setExpanded] = useState<Record<string, boolean>>({});
     const [answers, setAnswers] = useState<AnswersState>({});
+    const [note, setNote] = useState("");
     const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
         const fetchQuestions = async () => {
             setLoading(true);
             try {
-                const { data } = await api.get<WellnessQuestionsResponse>("/checkin/questions");
+                const { data } = await api.get<WellnessQuestionsResponse>("/checkin/questions?target=coordinator");
                 const domainList = data?.domains ?? [];
                 setDomains(domainList);
                 setExpanded((prev) => {
@@ -164,9 +165,11 @@ const WellnessRecordForm: React.FC<WellnessRecordFormProps> = ({ userId }) => {
             await api.post("/checkin/submit", {
                 userId,
                 answers: answerPayload,
+                note,
             });
             showSuccessToast("Wellness record submitted.");
             setAnswers({});
+            setNote("");
         } catch (err: any) {
             showErrorToast(err?.response?.data?.message || "Failed to submit wellness record");
         } finally {
@@ -287,6 +290,18 @@ const WellnessRecordForm: React.FC<WellnessRecordFormProps> = ({ userId }) => {
                     </div>
                 );
             })}
+            <Field>
+                <FieldLabel className="text-slate-200">Note</FieldLabel>
+                <FieldContent>
+                    <Input
+                        type="text"
+                        value={note}
+                        onChange={(event) => setNote(event.target.value)}
+                        placeholder="Add note (optional)"
+                        className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500"
+                    />
+                </FieldContent>
+            </Field>
             <div className="flex justify-end">
                 <Button
                     type="submit"
