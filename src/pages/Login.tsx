@@ -47,6 +47,9 @@ const Login: React.FC = () => {
             if (role == 'coordinator') {
                 navigate('/coordinator/wellness-record');
             }
+            if (role == 'consultant') {
+                navigate('/consultant/alerts');
+            }
         } catch (err: any) {
             console.error('Login error:', err);
 

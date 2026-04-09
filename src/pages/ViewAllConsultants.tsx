@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -16,49 +16,89 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Search, UserPlus, Ban, MoreVertical, Mail, Phone, Clock, Award, Users as UsersIcon } from 'lucide-react';
+import {
+    Search,
+    ShieldCheck,
+    MoreVertical,
+    Mail,
+    Clock,
+    Award,
+    Users as UsersIcon,
+    ExternalLink,
+} from 'lucide-react';
 import axios from '@/axios/axios-config';
 import { showSuccessToast, showErrorToast } from '@/utils/toast';
+import Pagination from '@/components/Pagination';
 
-interface Consultant {
+type ConsultantStatus = 'active' | 'pending';
+type AvailabilityFilter = 'all' | 'available' | 'busy' | 'unavailable';
+
+interface ConsultantUser {
     _id: string;
     name: string;
     email: string;
     phone?: string;
-    age?: number;
     consent?: boolean;
     privacyNoticeAccepted?: boolean;
     emailVerified?: boolean;
     phoneVerified?: boolean;
     role: 'consultant';
-    status?: 'active' | 'pending' | 'banned';
-    specialization?: string;
-    experience?: number;
-    gym?: {
-        _id: string;
-        name: string;
-    };
     createdAt: string;
     updatedAt: string;
-    lastActive?: string;
-    // Stats
-    clients?: number;
-    sessionsCompleted?: number;
+}
+
+interface ConsultantDomain {
+    _id: string;
+    domainId: string;
+    domainLabel: string;
+    domainIcon?: string;
+    domainColor?: string;
+    domainGradientColors?: string[];
+}
+
+interface ConsultantPricing {
+    currency?: string;
+    packages?: unknown[];
+}
+
+interface ConsultantAvailability {
+    status?: string;
+    workingDays?: string[];
+}
+
+interface Consultant {
+    _id: string;
+    user: ConsultantUser;
+    domain?: ConsultantDomain[];
+    specialty?: string;
+    description?: string;
+    meetingLink?: string;
+    yearsOfExperience?: number;
+    certifications?: string[];
+    badges?: string[];
+    modeOfTraining?: 'online' | 'offline' | 'hybrid';
+    pricing?: ConsultantPricing;
+    availability?: ConsultantAvailability;
     rating?: number;
-    availability?: 'available' | 'busy' | 'unavailable';
+    reviewsCount?: number;
+    isVerified?: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
+
+interface ApiPagination {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
 }
 
 interface ApiResponse {
     success: boolean;
     data: Consultant[];
-    pagination: {
-        total: number;
-        page: string;
-        limit: string;
-        totalPages: number;
-        hasNextPage: boolean;
-        hasPrevPage: boolean;
-    };
+    pagination?: ApiPagination;
 }
 
 interface ConsultantStats {
@@ -66,120 +106,150 @@ interface ConsultantStats {
     activeConsultants: number;
     pendingApproval: number;
     availableConsultants: number;
-    bannedConsultants: number;
+    verifiedConsultants: number;
 }
 
+const PAGE_LIMIT = 10;
+
 const ViewAllConsultants: React.FC = () => {
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
     const [consultants, setConsultants] = useState<Consultant[]>([]);
-    const [filteredConsultants, setFilteredConsultants] = useState<Consultant[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
-    const [statusFilter, setStatusFilter] = useState('all');
-    const [availabilityFilter, setAvailabilityFilter] = useState('all');
+    const [statusFilter, setStatusFilter] = useState<'all' | ConsultantStatus>('all');
+    const [availabilityFilter, setAvailabilityFilter] = useState<AvailabilityFilter>('all');
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState<ConsultantStats>({
         totalConsultants: 0,
         activeConsultants: 0,
         pendingApproval: 0,
         availableConsultants: 0,
-        bannedConsultants: 0,
+        verifiedConsultants: 0,
     });
 
     useEffect(() => {
-        fetchConsultants();
-    }, []);
+        fetchConsultants(page);
+    }, [page]);
 
-    useEffect(() => {
-        filterConsultants();
-    }, [searchQuery, statusFilter, availabilityFilter, consultants]);
-
-    const fetchConsultants = async () => {
+    const fetchConsultants = async (pageNum = 1) => {
         try {
             setLoading(true);
-            // Fetch consultant data from API
-            const response = await axios.get<ApiResponse>('/auth/users?role=consultant&page=1&limit=100&sortBy=createdAt&sortOrder=desc');
+            const response = await axios.get<ApiResponse>(
+                `/consultants?page=${pageNum}&limit=${PAGE_LIMIT}&sortBy=createdAt&sortOrder=desc`
+            );
 
             if (response?.data?.success) {
                 const consultantData = response.data.data ?? [];
+                const pagination = response.data.pagination;
 
-                // Add consultant-specific stats and fields
-                const consultantsWithStats: Consultant[] = consultantData.map((consultant: Consultant) => ({
-                    ...consultant,
-                    // Determine status based on email/phone verification
-                    status: (consultant?.emailVerified && consultant?.phoneVerified ? 'active' :
-                        (!consultant?.emailVerified || !consultant?.phoneVerified) ? 'pending' : 'active') as 'active' | 'pending' | 'banned',
-                    // Add mock consultant-specific stats
-                    clients: Math.floor(Math.random() * 50) + 5,
-                    sessionsCompleted: Math.floor(Math.random() * 200) + 10,
-                    rating: Number((Math.random() * 1 + 4).toFixed(1)),
-                    availability: ['available', 'busy', 'unavailable'][Math.floor(Math.random() * 3)] as 'available' | 'busy' | 'unavailable',
-                    specialization: ['Nutrition', 'Fitness', 'Physiotherapy', 'Mental Health', 'Weight Loss', 'Sports Medicine'][Math.floor(Math.random() * 6)],
-                    experience: Math.floor(Math.random() * 15) + 1,
-                    // Add last active time (mock)
-                    lastActive: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-                }));
-
-                setConsultants(consultantsWithStats);
-                calculateStats(consultantsWithStats);
+                setConsultants(consultantData);
+                setTotalPages(Math.max(pagination?.totalPages ?? 1, 1));
+                calculateStats(consultantData, pagination?.total ?? consultantData.length);
+                return;
             }
+
+            setConsultants([]);
+            setTotalPages(1);
+            calculateStats([], 0);
         } catch (error) {
             console.error('Error fetching consultants:', error);
             showErrorToast('Failed to load consultants');
-            setConsultants([]); // Set empty array on error
+            setConsultants([]);
+            setTotalPages(1);
+            calculateStats([], 0);
         } finally {
             setLoading(false);
         }
     };
 
-    const calculateStats = (consultantData: Consultant[]) => {
+    const calculateStats = (consultantData: Consultant[], totalConsultants: number) => {
         const safeConsultantData = consultantData ?? [];
+
         setStats({
-            totalConsultants: safeConsultantData.length,
-            activeConsultants: safeConsultantData.filter(c => c?.status === 'active').length,
-            pendingApproval: safeConsultantData.filter(c => c?.status === 'pending').length,
-            availableConsultants: safeConsultantData.filter(c => c?.availability === 'available').length,
-            bannedConsultants: safeConsultantData.filter(c => c?.status === 'banned').length,
+            totalConsultants,
+            activeConsultants: safeConsultantData.filter(
+                (consultant) => getConsultantStatus(consultant) === 'active'
+            ).length,
+            pendingApproval: safeConsultantData.filter(
+                (consultant) => getConsultantStatus(consultant) === 'pending'
+            ).length,
+            availableConsultants: safeConsultantData.filter(
+                (consultant) => getAvailabilityKey(consultant?.availability?.status) === 'available'
+            ).length,
+            verifiedConsultants: safeConsultantData.filter((consultant) => consultant?.isVerified).length,
         });
     };
 
-    const filterConsultants = () => {
+    const getConsultantStatus = (consultant: Consultant): ConsultantStatus => {
+        return consultant?.user?.emailVerified && consultant?.user?.phoneVerified ? 'active' : 'pending';
+    };
+
+    const getAvailabilityKey = (status?: string): Exclude<AvailabilityFilter, 'all'> => {
+        const normalizedStatus = status?.toLowerCase() ?? '';
+
+        if (normalizedStatus.includes('available')) {
+            return 'available';
+        }
+
+        if (normalizedStatus.includes('busy')) {
+            return 'busy';
+        }
+
+        return 'unavailable';
+    };
+
+    const getFilteredConsultants = () => {
         let filtered = [...(consultants ?? [])];
 
-        // Apply search filter
-        if (searchQuery) {
+        if (searchQuery.trim()) {
+            const normalizedQuery = searchQuery.trim().toLowerCase();
+
+            filtered = filtered.filter((consultant) => {
+                const domainText = (consultant?.domain ?? [])
+                    .map((item) => item?.domainLabel ?? '')
+                    .join(' ')
+                    .toLowerCase();
+                const certificationText = (consultant?.certifications ?? []).join(' ').toLowerCase();
+
+                return [
+                    consultant?.user?.name,
+                    consultant?.user?.email,
+                    consultant?.specialty,
+                    consultant?.description,
+                    consultant?.modeOfTraining,
+                    domainText,
+                    certificationText,
+                ]
+                    .filter(Boolean)
+                    .some((value) => value?.toLowerCase().includes(normalizedQuery));
+            });
+        }
+
+        if (statusFilter !== 'all') {
+            filtered = filtered.filter((consultant) => getConsultantStatus(consultant) === statusFilter);
+        }
+
+        if (availabilityFilter !== 'all') {
             filtered = filtered.filter(
-                (consultant) =>
-                    consultant?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    consultant?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    consultant?.specialization?.toLowerCase().includes(searchQuery.toLowerCase())
+                (consultant) => getAvailabilityKey(consultant?.availability?.status) === availabilityFilter
             );
         }
 
-        // Apply status filter
-        if (statusFilter !== 'all') {
-            filtered = filtered.filter((consultant) => consultant?.status === statusFilter);
-        }
-
-        // Apply availability filter
-        if (availabilityFilter !== 'all') {
-            filtered = filtered.filter((consultant) => consultant?.availability === availabilityFilter);
-        }
-
-        setFilteredConsultants(filtered);
+        return filtered;
     };
 
     const getInitials = (name: string) => {
         const safeName = name ?? 'Unknown';
         return safeName
             .split(' ')
-            .map(n => n?.[0] ?? '')
+            .map((part) => part?.[0] ?? '')
             .join('')
             .toUpperCase()
             .slice(0, 2) || 'C';
     };
 
-    const getStatusBadge = (status: string) => {
-        const safeStatus = status ?? 'active';
-        switch (safeStatus) {
+    const getStatusBadge = (status: ConsultantStatus) => {
+        switch (status) {
             case 'active':
                 return (
                     <Badge className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20">
@@ -187,121 +257,125 @@ const ViewAllConsultants: React.FC = () => {
                     </Badge>
                 );
             case 'pending':
+            default:
                 return (
                     <Badge className="bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 hover:bg-yellow-500/20">
                         Pending
                     </Badge>
                 );
-            case 'banned':
-                return (
-                    <Badge className="bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20">
-                        Banned
-                    </Badge>
-                );
-            default:
-                return (
-                    <Badge className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20">
-                        Active
-                    </Badge>
-                );
         }
     };
 
-    const getAvailabilityBadge = (availability: string) => {
-        const safeAvailability = availability ?? 'available';
-        switch (safeAvailability) {
+    const getAvailabilityBadge = (availabilityStatus?: string) => {
+        const availabilityKey = getAvailabilityKey(availabilityStatus);
+        const label = availabilityStatus?.trim() || 'Unavailable';
+
+        switch (availabilityKey) {
             case 'available':
                 return (
                     <Badge className="bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/20">
-                        Available
+                        {label}
                     </Badge>
                 );
             case 'busy':
                 return (
                     <Badge className="bg-orange-500/10 text-orange-400 border border-orange-500/20 hover:bg-orange-500/20">
-                        Busy
+                        {label}
                     </Badge>
                 );
             case 'unavailable':
-                return (
-                    <Badge className="bg-gray-500/10 text-gray-400 border border-gray-500/20 hover:bg-gray-500/20">
-                        Unavailable
-                    </Badge>
-                );
             default:
                 return (
-                    <Badge className="bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/20">
-                        Available
+                    <Badge className="bg-slate-500/10 text-slate-300 border border-slate-500/20 hover:bg-slate-500/20">
+                        {label}
                     </Badge>
                 );
         }
     };
 
-    const formatTimeAgo = (dateString: string) => {
-        try {
-            const date = new Date(dateString);
-            const now = new Date();
-            const diffInMs = now.getTime() - date.getTime();
-            const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+    const formatDate = (dateString?: string) => {
+        if (!dateString) return 'N/A';
 
-            if (diffInDays === 0) {
-                const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-                if (diffInHours === 0) {
-                    const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-                    return `${diffInMinutes}m ago`;
-                }
-                return `${diffInHours}h ago`;
-            }
-            return `${diffInDays}d ago`;
+        try {
+            return new Date(dateString).toLocaleDateString('en-US', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+            });
         } catch (error) {
             return 'N/A';
         }
     };
 
-    const handleConsultantAction = (action: string, consultantId: string) => {
-        console.log(`${action} consultant:`, consultantId);
-        showSuccessToast(`Consultant ${action} successfully`);
+    const formatTrainingMode = (mode?: Consultant['modeOfTraining']) => {
+        if (!mode) return 'Not set';
+        return mode.charAt(0).toUpperCase() + mode.slice(1);
     };
+
+    const formatCurrency = (pricing?: ConsultantPricing) => {
+        const currency = pricing?.currency ?? 'INR';
+        const packageCount = pricing?.packages?.length ?? 0;
+        return `${currency} ${packageCount} package${packageCount === 1 ? '' : 's'}`;
+    };
+
+    const handleConsultantAction = async (action: string, consultant: Consultant) => {
+        if (action === 'Copy Meeting Link' && consultant?.meetingLink) {
+            try {
+                await navigator.clipboard.writeText(consultant.meetingLink);
+                showSuccessToast('Meeting link copied successfully');
+                return;
+            } catch (error) {
+                console.error('Error copying meeting link:', error);
+                showErrorToast('Failed to copy meeting link');
+                return;
+            }
+        }
+
+        console.log(`${action} consultant:`, consultant?._id);
+        showSuccessToast(`Consultant ${action.toLowerCase()} successfully`);
+    };
+
+    const filteredConsultants = getFilteredConsultants();
 
     return (
         <div className="flex flex-col min-h-screen bg-slate-950 text-white p-6">
-            {/* Header */}
-            <div className="mb-8 flex justify-between items-start">
+            <div className="mb-8 flex justify-between items-start gap-4">
                 <div>
                     <h1 className="text-3xl font-bold mb-2">Consultant Management</h1>
-                    <p className="text-slate-400">Manage consultants, their specializations, and availability</p>
+                    <p className="text-slate-400">
+                        Manage consultant profiles, domain expertise, and availability.
+                    </p>
                 </div>
                 <div className="flex gap-3">
                     <Button
                         variant="outline"
                         className="bg-slate-900 border-slate-700 text-white hover:bg-slate-800"
                     >
-                        <UserPlus className="w-4 h-4 mr-2" />
+                        <UsersIcon className="w-4 h-4 mr-2" />
                         Pending Approval ({stats?.pendingApproval ?? 0})
                     </Button>
                     <Button
                         variant="outline"
                         className="bg-slate-900 border-slate-700 text-white hover:bg-slate-800"
                     >
-                        <Ban className="w-4 h-4 mr-2" />
-                        Banned ({stats?.bannedConsultants ?? 0})
+                        <ShieldCheck className="w-4 h-4 mr-2" />
+                        Verified ({stats?.verifiedConsultants ?? 0})
                     </Button>
                 </div>
             </div>
 
-            {/* Search and Filter Bar */}
             <div className="flex flex-col md:flex-row gap-4 mb-6">
                 <div className="flex-1 relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 w-5 h-5" />
                     <Input
                         type="text"
-                        placeholder="Search consultants by name, email or specialization..."
+                        placeholder="Search consultants by name, email, specialty or domain..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="pl-10 bg-slate-900 border-slate-700 text-white placeholder:text-slate-500 focus:border-purple-500"
                     />
                 </div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as 'all' | ConsultantStatus)}>
                     <SelectTrigger className="w-full md:w-[180px] bg-slate-900 border-slate-700 text-white">
                         <SelectValue placeholder="All Status" />
                     </SelectTrigger>
@@ -309,10 +383,12 @@ const ViewAllConsultants: React.FC = () => {
                         <SelectItem value="all" className="text-white">All Status</SelectItem>
                         <SelectItem value="active" className="text-white">Active</SelectItem>
                         <SelectItem value="pending" className="text-white">Pending</SelectItem>
-                        <SelectItem value="banned" className="text-white">Banned</SelectItem>
                     </SelectContent>
                 </Select>
-                <Select value={availabilityFilter} onValueChange={setAvailabilityFilter}>
+                <Select
+                    value={availabilityFilter}
+                    onValueChange={(value) => setAvailabilityFilter(value as AvailabilityFilter)}
+                >
                     <SelectTrigger className="w-full md:w-[180px] bg-slate-900 border-slate-700 text-white">
                         <SelectValue placeholder="All Availability" />
                     </SelectTrigger>
@@ -325,7 +401,6 @@ const ViewAllConsultants: React.FC = () => {
                 </Select>
             </div>
 
-            {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
                 <div className="bg-slate-900 rounded-lg p-6 border border-slate-800">
                     <div className="text-4xl font-bold text-teal-500 mb-2">{stats?.totalConsultants ?? 0}</div>
@@ -333,7 +408,7 @@ const ViewAllConsultants: React.FC = () => {
                 </div>
                 <div className="bg-slate-900 rounded-lg p-6 border border-slate-800">
                     <div className="text-4xl font-bold text-green-500 mb-2">{stats?.activeConsultants ?? 0}</div>
-                    <div className="text-slate-400 text-sm">Active</div>
+                    <div className="text-slate-400 text-sm">Active on This Page</div>
                 </div>
                 <div className="bg-slate-900 rounded-lg p-6 border border-slate-800">
                     <div className="text-4xl font-bold text-emerald-500 mb-2">{stats?.availableConsultants ?? 0}</div>
@@ -341,15 +416,14 @@ const ViewAllConsultants: React.FC = () => {
                 </div>
                 <div className="bg-slate-900 rounded-lg p-6 border border-slate-800">
                     <div className="text-4xl font-bold text-yellow-500 mb-2">{stats?.pendingApproval ?? 0}</div>
-                    <div className="text-slate-400 text-sm">Pending</div>
+                    <div className="text-slate-400 text-sm">Pending on This Page</div>
                 </div>
                 <div className="bg-slate-900 rounded-lg p-6 border border-slate-800">
-                    <div className="text-4xl font-bold text-red-500 mb-2">{stats?.bannedConsultants ?? 0}</div>
-                    <div className="text-slate-400 text-sm">Banned</div>
+                    <div className="text-4xl font-bold text-blue-500 mb-2">{stats?.verifiedConsultants ?? 0}</div>
+                    <div className="text-slate-400 text-sm">Verified on This Page</div>
                 </div>
             </div>
 
-            {/* Consultant Cards */}
             {loading ? (
                 <div className="flex justify-center items-center h-64">
                     <div className="text-slate-400">Loading consultants...</div>
@@ -362,85 +436,129 @@ const ViewAllConsultants: React.FC = () => {
                 <div className="space-y-4">
                     {filteredConsultants.map((consultant) => (
                         <div
-                            key={consultant?._id ?? Math.random()}
+                            key={consultant?._id}
                             className="bg-slate-900 rounded-lg p-6 border border-slate-800 hover:border-slate-700 transition-colors"
                         >
-                            <div className="flex items-start justify-between">
+                            <div className="flex items-start justify-between gap-4">
                                 <div className="flex items-start gap-4 flex-1">
-                                    {/* Avatar */}
                                     <Avatar className="w-16 h-16 bg-teal-700">
                                         <AvatarFallback className="bg-teal-700 text-white text-lg font-semibold">
-                                            {getInitials(consultant?.name ?? 'Unknown')}
+                                            {getInitials(consultant?.user?.name ?? 'Unknown')}
                                         </AvatarFallback>
                                     </Avatar>
 
-                                    {/* Consultant Info */}
                                     <div className="flex-1">
-                                        <h3 className="text-xl font-semibold text-white mb-2">{consultant?.name ?? 'Unknown Consultant'}</h3>
-                                        <div className="flex flex-wrap items-center gap-4 mb-3 text-sm text-slate-400">
-                                            <div className="flex items-center gap-2">
-                                                <Mail className="w-4 h-4" />
-                                                {consultant?.email ?? 'No email'}
+                                        <div className="flex flex-col gap-3">
+                                            <div>
+                                                <h3 className="text-xl font-semibold text-white mb-2">
+                                                    {consultant?.user?.name ?? 'Unknown Consultant'}
+                                                </h3>
+                                                <div className="flex flex-wrap items-center gap-4 text-sm text-slate-400">
+                                                    <div className="flex items-center gap-2">
+                                                        <Mail className="w-4 h-4" />
+                                                        {consultant?.user?.email ?? 'No email'}
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Clock className="w-4 h-4" />
+                                                        Joined {formatDate(consultant?.createdAt ?? consultant?.user?.createdAt)}
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <ExternalLink className="w-4 h-4" />
+                                                        {formatTrainingMode(consultant?.modeOfTraining)}
+                                                    </div>
+                                                </div>
                                             </div>
-                                            {consultant?.phone && (
-                                                <div className="flex items-center gap-2">
-                                                    <Phone className="w-4 h-4" />
-                                                    {consultant.phone}
-                                                </div>
-                                            )}
-                                            {consultant?.lastActive && (
-                                                <div className="flex items-center gap-2">
-                                                    <Clock className="w-4 h-4" />
-                                                    {formatTimeAgo(consultant.lastActive)}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="flex flex-wrap items-center gap-2 mb-4">
-                                            {getStatusBadge(consultant?.status ?? 'active')}
-                                            {getAvailabilityBadge(consultant?.availability ?? 'available')}
-                                            {consultant?.specialization && (
-                                                <Badge className="bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                                                    <Award className="w-3 h-3 mr-1" />
-                                                    {consultant.specialization}
-                                                </Badge>
-                                            )}
-                                            {consultant?.experience && (
-                                                <Badge className="bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                                                    {consultant.experience} yrs exp
-                                                </Badge>
-                                            )}
-                                            {consultant?.gym?.name && (
-                                                <Badge className="bg-slate-800 text-slate-300 border-slate-700">
-                                                    {consultant.gym.name}
-                                                </Badge>
-                                            )}
-                                        </div>
 
-                                        {/* Stats */}
-                                        <div className="grid grid-cols-3 gap-6">
-                                            <div>
-                                                <div className="text-2xl font-bold text-white flex items-center gap-2">
-                                                    <UsersIcon className="w-5 h-5 text-teal-400" />
-                                                    {consultant?.clients ?? 0}
-                                                </div>
-                                                <div className="text-sm text-slate-400">Active Clients</div>
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                {getStatusBadge(getConsultantStatus(consultant))}
+                                                {getAvailabilityBadge(consultant?.availability?.status)}
+                                                {consultant?.isVerified ? (
+                                                    <Badge className="bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                                                        <ShieldCheck className="w-3 h-3 mr-1" />
+                                                        Verified
+                                                    </Badge>
+                                                ) : null}
+                                                {consultant?.specialty ? (
+                                                    <Badge className="bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                                                        <Award className="w-3 h-3 mr-1" />
+                                                        {consultant.specialty}
+                                                    </Badge>
+                                                ) : null}
+                                                {(consultant?.domain ?? []).map((domain) => (
+                                                    <Badge
+                                                        key={domain?._id}
+                                                        className="border"
+                                                        style={{
+                                                            backgroundColor: `${domain?.domainColor ?? '#334155'}1A`,
+                                                            borderColor: `${domain?.domainColor ?? '#475569'}33`,
+                                                            color: domain?.domainColor ?? '#E2E8F0',
+                                                        }}
+                                                    >
+                                                        <span className="mr-1">{domain?.domainIcon ?? '•'}</span>
+                                                        {domain?.domainLabel ?? 'Domain'}
+                                                    </Badge>
+                                                ))}
                                             </div>
-                                            <div>
-                                                <div className="text-2xl font-bold text-white">{consultant?.sessionsCompleted ?? 0}</div>
-                                                <div className="text-sm text-slate-400">Sessions Completed</div>
-                                            </div>
-                                            <div>
-                                                <div className="text-2xl font-bold text-white flex items-center gap-2">
-                                                    <Award className="w-5 h-5 text-yellow-400" />
-                                                    {consultant?.rating ?? 0}
+
+                                            {consultant?.description ? (
+                                                <p className="text-sm text-slate-300 leading-6">
+                                                    {consultant.description}
+                                                </p>
+                                            ) : null}
+
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                                                <div>
+                                                    <div className="text-2xl font-bold text-white">
+                                                        {consultant?.yearsOfExperience ?? '-'}
+                                                    </div>
+                                                    <div className="text-sm text-slate-400">Years of Experience</div>
                                                 </div>
-                                                <div className="text-sm text-slate-400">Rating</div>
+                                                <div>
+                                                    <div className="text-2xl font-bold text-white flex items-center gap-2">
+                                                        <UsersIcon className="w-5 h-5 text-teal-400" />
+                                                        {consultant?.domain?.length ?? 0}
+                                                    </div>
+                                                    <div className="text-sm text-slate-400">Domains Covered</div>
+                                                </div>
+                                                <div>
+                                                    <div className="text-2xl font-bold text-white">{consultant?.reviewsCount ?? 0}</div>
+                                                    <div className="text-sm text-slate-400">Reviews</div>
+                                                </div>
+                                                <div>
+                                                    <div className="text-2xl font-bold text-white flex items-center gap-2">
+                                                        <Award className="w-5 h-5 text-yellow-400" />
+                                                        {(consultant?.rating ?? 0).toFixed(1)}
+                                                    </div>
+                                                    <div className="text-sm text-slate-400">Rating</div>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 text-sm">
+                                                <div className="flex flex-wrap items-center gap-4 text-slate-400">
+                                                    <span>Pricing: {formatCurrency(consultant?.pricing)}</span>
+                                                    <span>
+                                                        Certifications: {consultant?.certifications?.length ?? 0}
+                                                    </span>
+                                                    <span>
+                                                        Working Days: {consultant?.availability?.workingDays?.length ?? 0}
+                                                    </span>
+                                                </div>
+                                                {consultant?.meetingLink ? (
+                                                    <a
+                                                        href={consultant.meetingLink}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="inline-flex items-center gap-2 text-teal-400 hover:text-teal-300"
+                                                    >
+                                                        <ExternalLink className="w-4 h-4" />
+                                                        Open meeting link
+                                                    </a>
+                                                ) : null}
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Actions Menu */}
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button
@@ -454,46 +572,24 @@ const ViewAllConsultants: React.FC = () => {
                                     <DropdownMenuContent className="bg-slate-900 border-slate-700 text-white">
                                         <DropdownMenuItem
                                             className="hover:bg-slate-800"
-                                            onClick={() => handleConsultantAction('View', consultant?._id ?? '')}
+                                            onClick={() => handleConsultantAction('View details', consultant)}
                                         >
                                             View Details
                                         </DropdownMenuItem>
                                         <DropdownMenuItem
                                             className="hover:bg-slate-800"
-                                            onClick={() => handleConsultantAction('Edit', consultant?._id ?? '')}
+                                            onClick={() => handleConsultantAction('Edit', consultant)}
                                         >
                                             Edit Consultant
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem
-                                            className="hover:bg-slate-800"
-                                            onClick={() => handleConsultantAction('View Schedule', consultant?._id ?? '')}
-                                        >
-                                            View Schedule
-                                        </DropdownMenuItem>
-                                        {consultant?.status === 'pending' && (
+                                        {consultant?.meetingLink ? (
                                             <DropdownMenuItem
                                                 className="hover:bg-slate-800"
-                                                onClick={() => handleConsultantAction('Approve', consultant?._id ?? '')}
+                                                onClick={() => handleConsultantAction('Copy Meeting Link', consultant)}
                                             >
-                                                Approve Consultant
+                                                Copy Meeting Link
                                             </DropdownMenuItem>
-                                        )}
-                                        {consultant?.status !== 'banned' && (
-                                            <DropdownMenuItem
-                                                className="hover:bg-slate-800 text-red-400"
-                                                onClick={() => handleConsultantAction('Ban', consultant?._id ?? '')}
-                                            >
-                                                Ban Consultant
-                                            </DropdownMenuItem>
-                                        )}
-                                        {consultant?.status === 'banned' && (
-                                            <DropdownMenuItem
-                                                className="hover:bg-slate-800 text-green-400"
-                                                onClick={() => handleConsultantAction('Unban', consultant?._id ?? '')}
-                                            >
-                                                Unban Consultant
-                                            </DropdownMenuItem>
-                                        )}
+                                        ) : null}
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </div>
@@ -501,6 +597,15 @@ const ViewAllConsultants: React.FC = () => {
                     ))}
                 </div>
             )}
+
+            {!loading && filteredConsultants.length > 0 ? (
+                <Pagination
+                    page={page}
+                    totalPages={totalPages}
+                    onPageChange={setPage}
+                    className="mt-8"
+                />
+            ) : null}
         </div>
     );
 };

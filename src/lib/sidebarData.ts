@@ -25,6 +25,12 @@ export const getSidebarData = (user: User) => {
                 url: "/coordinator/wellness-record",
                 icon: CheckCircle2,
             }
+        ] : (user.role === 'consultant') ? [
+            {
+                title: "Red Alerts",
+                url: "/consultant/alerts",
+                icon: Users,
+            },
         ] : [
             {
                 title: "Platform Overview",

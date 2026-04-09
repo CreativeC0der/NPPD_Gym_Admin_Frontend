@@ -21,7 +21,6 @@ const defaultForm = {
     lastName: "",
     phone: "",
     email: "",
-    role: "user",
     consent: false,
     privacyNoticeAccepted: false,
     joiningDate: "",
@@ -104,7 +103,7 @@ export default function CreateUserForm({ onUserCreated }: { onUserCreated?: () =
                 email: form.email,
                 phone: form.phone,
                 gender: form.gender,
-                role: form.role,
+                role: "user",
                 subscriptionType: form.subscriptionType,
                 age: getAgeFromDateOfBirth(form.dateOfBirth),
                 consent: Boolean(form.consent),
@@ -194,21 +193,6 @@ export default function CreateUserForm({ onUserCreated }: { onUserCreated?: () =
                         <FieldContent>
                             <Input id="dateOfBirth" name="dateOfBirth" type="date" value={form.dateOfBirth} onChange={handleChange} required className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500" />
                             <FieldDescription className="text-slate-400">User's date of birth</FieldDescription>
-                        </FieldContent>
-                    </Field>
-                    <Field>
-                        <FieldLabel htmlFor="role" className="text-slate-300">Role *</FieldLabel>
-                        <FieldContent>
-                            <Select value={form.role} onValueChange={(v: string) => handleSelectChange("role", v)}>
-                                <SelectTrigger id="role" name="role" className="bg-slate-700 border-slate-600 text-white">
-                                    <SelectValue placeholder="Select role" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="user">User</SelectItem>
-                                    <SelectItem value="consultant">Consultant</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <FieldDescription className="text-slate-400">Assign a role to the user</FieldDescription>
                         </FieldContent>
                     </Field>
                     <Field>

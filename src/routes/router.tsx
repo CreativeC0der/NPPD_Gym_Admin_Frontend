@@ -11,6 +11,7 @@ import Revenue from '../pages/Revenue';
 import CreateUser from '../pages/CreateUser';
 import UserExcelUploadPage from '../pages/UserExcelUploadPage';
 import WellnessRecord from '../pages/WellnessRecord';
+import ConsultantAlerts from '../pages/ConsultantAlerts';
 
 export const router = createBrowserRouter([
     {
@@ -138,6 +139,20 @@ export const router = createBrowserRouter([
                 element: (
                     <Protected requiredRole={['coordinator']}>
                         <WellnessRecord />
+                    </Protected>
+                ),
+            },
+        ],
+    },
+    {
+        path: '/consultant/alerts',
+        element: <Layout />,
+        children: [
+            {
+                index: true,
+                element: (
+                    <Protected requiredRole={['consultant']}>
+                        <ConsultantAlerts />
                     </Protected>
                 ),
             },
